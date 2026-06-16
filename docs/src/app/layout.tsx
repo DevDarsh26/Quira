@@ -16,8 +16,26 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Quira | Next-Gen RAG",
-  description: "Faster and smarter Retrieval Augmented Generation using Speculative Retrieval and Context Tetris.",
+  metadataBase: new URL("https://quira.darshmodii.in"),
+  title: "Quira | High-Performance RAG Framework",
+  description: "Quira is a token-efficient, zero-latency Retrieval Augmented Generation (RAG) framework featuring Speculative Retrieval and Context Tetris.",
+  keywords: ["RAG", "LLM", "Vector Database", "Speculative Retrieval", "Context Tetris", "Generative AI", "Python", "AI Framework"],
+  authors: [{ name: "Darsh Modii" }],
+  openGraph: {
+    title: "Quira | High-Performance RAG Framework",
+    description: "Build incredibly fast AI apps with Quira's zero-latency RAG engine.",
+    url: "https://quira.darshmodii.in",
+    siteName: "Quira",
+    images: [{ url: "/quira_logo.png", width: 800, height: 600, alt: "Quira Logo" }],
+    locale: "en_US",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Quira | High-Performance RAG Framework",
+    description: "Build incredibly fast AI apps with Quira's zero-latency RAG engine.",
+    images: ["/quira_logo.png"],
+  },
 };
 
 export default function RootLayout({

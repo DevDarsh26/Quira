@@ -16,7 +16,7 @@ export default function Home() {
           v0.2.0 is now live on PyPI
         </Badge>
         
-        <h1 className="text-5xl md:text-7xl font-extrabold tracking-tighter max-w-4xl bg-clip-text text-transparent bg-gradient-to-br from-foreground via-foreground/90 to-muted-foreground">
+        <h1 className="text-5xl md:text-7xl font-extrabold tracking-tighter max-w-4xl bg-clip-text text-transparent bg-linear-to-br from-foreground via-foreground/90 to-muted-foreground">
           Faster, Smarter RAG for the Modern AI Stack
         </h1>
         
@@ -82,7 +82,7 @@ export default function Home() {
               </CardHeader>
               <CardContent>
                 <CardDescription className="text-base leading-relaxed">
-                  Maintains conversational state and only retrieves new "delta" chunks, significantly reducing redundant database hits.
+                  Maintains conversational state and only retrieves new &quot;delta&quot; chunks, significantly reducing redundant database hits.
                 </CardDescription>
               </CardContent>
             </Card>
@@ -143,19 +143,21 @@ export default function Home() {
                 <div className="w-3 h-3 rounded-full bg-green-500/80" />
                 <span className="ml-2 text-xs font-medium text-muted-foreground font-mono">main.py</span>
               </div>
-              <div className="p-6 overflow-x-auto text-sm font-mono leading-relaxed text-zinc-300">
-                <pre><code><span className="text-pink-400">from</span> quira <span className="text-pink-400">import</span> quiraPipeline, UserSession{"\n\n"}
-<span className="text-zinc-500"># 1. Initialize with your favorite providers</span>{"\n"}
+              <div className="p-4 sm:p-6 font-mono text-xs sm:text-sm text-zinc-300 leading-relaxed overflow-x-auto"><pre><code><span className="text-zinc-500"># 1. Install via pip</span>{"\n"}
+<span className="text-zinc-300">pip install </span><span className="text-green-400">&quot;quira[all]&quot;</span>{"\n\n"} quiraPipeline, UserSession{"\n\n"}
+<span className="text-zinc-500"># Drop-in provider abstraction</span>{"\n"}
 pipeline = quiraPipeline({"\n"}
-    vector_store=<span className="text-green-400">"qdrant"</span>,{"\n"}
-    cache=<span className="text-green-400">"memory"</span>,{"\n"}
-    llm=<span className="text-green-400">"groq/llama-3.1-8b-instant"</span>{"\n"}
+    vector_store=<span className="text-green-400">&quot;qdrant&quot;</span>,{"\n"}
+    cache=<span className="text-green-400">&quot;redis&quot;</span>,{"\n"}
+    llm=<span className="text-green-400">&quot;openai/gpt-4o&quot;</span>{"\n"}
 ){"\n\n"}
-<span className="text-zinc-500"># 2. Ingest some documents</span>{"\n"}
-pipeline.ingest_text_sync(<span className="text-green-400">"Quantum mechanics is fascinating..."</span>){"\n\n"}
+
+<span className="text-zinc-500"># 100% LangChain compatible</span>{"\n"}
+retriever = QuiraRetriever(pipeline=pipeline){"\n"}
+docs = retriever.invoke(<span className="text-green-400">&quot;What is Context Tetris?&quot;</span>){"\n\n"}
 <span className="text-zinc-500"># 3. Process a query (handles Tetris + Generation internally)</span>{"\n"}
-session = UserSession(<span className="text-green-400">"user_123"</span>){"\n"}
-answer = pipeline.process_submission_sync(session, <span className="text-green-400">"What is quantum mechanics?"</span>){"\n\n"}
+session = UserSession(<span className="text-green-400">&quot;user_123&quot;</span>){"\n"}
+answer = pipeline.process_submission_sync(session, <span className="text-green-400">&quot;What is quantum mechanics?&quot;</span>){"\n\n"}
 <span className="text-blue-400">print</span>(answer)</code></pre>
               </div>
             </div>

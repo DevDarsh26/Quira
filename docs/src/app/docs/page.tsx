@@ -1,5 +1,11 @@
 import { Badge } from "@/components/ui/badge";
 import { Terminal, Zap, Puzzle, GitPullRequest, Layers, Code2 } from "lucide-react";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Documentation | Quira",
+  description: "Learn how to install, configure, and use Quira's advanced RAG capabilities including Speculative Retrieval, Context Tetris, and Provider Abstractions.",
+};
 
 export default function DocsPage() {
   return (
