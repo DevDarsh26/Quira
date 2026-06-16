@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "quira"
-version = "0.1.0"
+version = "0.2.0"
 description = "Faster and smarter Retrieval Augmented Generation using Speculative Retrieval and Context Tetris."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -20,13 +20,10 @@ classifiers = [
 ]
 
 dependencies = [
-    "fastembed>=0.2.0",
     "numpy>=1.24.0",
-    "qdrant-client>=1.7.0",
     "tiktoken>=0.5.0",
-    "spacy>=3.7.0",
-    "groq>=0.4.0",
-    "pymupdf>=1.23.0",
+    "nest-asyncio>=1.5.0",
+    "fastembed>=0.2.0",
 ]
 
 [project.urls]
@@ -37,11 +34,52 @@ Documentation = "https://github.com/DevDarsh26/quira#readme"
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["quira*"]
-exclude = ["demo*"]
+exclude = ["demo*", "tests*"]
 
 [project.optional-dependencies]
 dev = [
     "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
     "black>=23.0.0",
     "mypy>=1.5.0"
+]
+pdf = [
+    "pymupdf>=1.23.0"
+]
+spacy = [
+    "spacy>=3.7.0"
+]
+pinecone = [
+    "pinecone-client>=3.0.0"
+]
+chroma = [
+    "chromadb>=0.4.0"
+]
+qdrant = [
+    "qdrant-client>=1.7.0"
+]
+weaviate = [
+    "weaviate-client>=4.4.0"
+]
+redis = [
+    "redis>=5.0.0"
+]
+openai = [
+    "openai>=1.0.0"
+]
+anthropic = [
+    "anthropic>=0.18.0"
+]
+groq = [
+    "groq>=0.4.0"
+]
+ollama = [
+    "ollama>=0.1.0"
+]
+integrations = [
+    "langchain-core>=0.1.0",
+    "llama-index-core>=0.10.0"
+]
+all = [
+    "quira[pdf,spacy,pinecone,chroma,qdrant,weaviate,redis,openai,anthropic,groq,ollama,integrations]"
 ]

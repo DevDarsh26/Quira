@@ -18,14 +18,16 @@ if not logger.handlers:
     ch.setFormatter(logging.Formatter('%(message)s'))
     logger.addHandler(ch)
 
+from quira.providers.base import VectorStore
+
 class DocumentIngestor:
     """
     quira Data Ingestion Module:
     Parses PDFs and raw text, chunks them intelligently with overlaps, 
-    embeds them, and upserts them into Qdrant for retrieval.
+    embeds them, and upserts them into the VectorStore for retrieval.
     """
-    def __init__(self, qdrant_client: Any, embed_func: Any):
-        self.qdrant = qdrant_client
+    def __init__(self, vector_store: VectorStore, embed_func: Any):
+        self.vector_store = vector_store
         self.embed_func = embed_func
 
     def _chunk_text(self, text: str, chunk_size: int = 1000, overlap: int = 200) -> List[str]:
@@ -110,25 +112,26 @@ class DocumentIngestor:
                 }
             ))
 
-        # Upsert into Qdrant
+        # Upsert into VectorStore
         collection_name = f"quira_{user_id}"
-        logger.info(f"User {user_id}: Upserting {len(points)} chunks into Qdrant collection '{collection_name}'...")
+        logger.info(f"User {user_id}: Upserting {len(points)} chunks into collection '{collection_name}'...")
         
         try:
-            if asyncio.iscoroutinefunction(self.qdrant.upsert):
-                await self.qdrant.upsert(
-                    collection_name=collection_name,
-                    points=points
-                )
-            else:
-                self.qdrant.upsert(
-                    collection_name=collection_name,
-                    points=points
-                )
+            points_to_upsert = [
+                {
+                    "id": p.id,
+                    "vector": p.vector,
+                    "payload": p.payload
+                } for p in points
+            ]
+            await self.vector_store.upsert(
+                collection_name=collection_name,
+                points=points_to_upsert
+            )
             logger.info(f"User {user_id}: Successfully ingested {len(points)} chunks.")
             return len(points)
         except Exception as e:
-            logger.error(f"User {user_id}: Failed to upsert to Qdrant: {e}")
+            logger.error(f"User {user_id}: Failed to upsert: {e}")
             raise
 
     async def ingest_pdf(self, user_id: str, file_path: str, chunk_size: int = 1000, overlap: int = 200) -> int:

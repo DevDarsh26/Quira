@@ -15,15 +15,17 @@ if not logger.handlers:
     ch.setFormatter(logging.Formatter('%(message)s'))
     logger.addHandler(ch)
 
+from quira.providers.base import VectorStore, CacheBackend
+
 class SpeculativeRetriever:
     """
     Module 1 - Speculative Retrieval:
-    Detects typing, debounces based on speed, searches Qdrant, and caches in Upstash Redis.
+    Detects typing, debounces based on speed, searches VectorStore, and caches in CacheBackend.
     """
-    def __init__(self, user_id: str, qdrant_client: Any, redis_client: Any, embed_func: Optional[Any] = None):
+    def __init__(self, user_id: str, vector_store: VectorStore, cache: CacheBackend, embed_func: Optional[Any] = None):
         self.user_id = user_id
-        self.qdrant = qdrant_client
-        self.redis = redis_client
+        self.vector_store = vector_store
+        self.cache = cache
         
         if embed_func:
             self.embed_func = embed_func
@@ -132,47 +134,23 @@ class SpeculativeRetriever:
         self._last_searched_query = partial_query
         self._last_searched_embedding = current_emb
         
-        # Cache results in Redis
+        # Cache results
         query_hash = self._hash_query(partial_query)
-        redis_key = f"user:{self.user_id}:speculative:{query_hash}"
+        cache_key = f"user:{self.user_id}:speculative:{query_hash}"
         
-        # We assume redis_client.setex is synchronous or asynchronous.
-        # Upstash redis client is usually async in this context, but we will wrap it
-        # depending on whether it's an awaitable. We'll assume a standard async interface.
-        if asyncio.iscoroutinefunction(self.redis.setex):
-            await self.redis.setex(redis_key, 600, json.dumps(results)) # 10 mins TTL
-        else:
-            self.redis.setex(redis_key, 600, json.dumps(results))
+        await self.cache.set(cache_key, json.dumps(results), ttl_seconds=600)
 
     async def _perform_search(self, embedding: np.ndarray) -> List[Dict[str, Any]]:
-        """Mock search against Qdrant."""
-        # This mocks `qdrant_client.search(...)`
-        # In reality:
-        # hits = self.qdrant.search(
-        #     collection_name=f"quira_{self.user_id}",
-        #     query_vector=embedding.tolist(),
-        #     limit=10
-        # )
-        
-        # Since we cannot actually hit a real Qdrant collection in a test,
-        # we will assume the qdrant_client has an async search method or mock it.
+        """Search against VectorStore."""
         try:
-            if asyncio.iscoroutinefunction(self.qdrant.search):
-                hits = await self.qdrant.search(
-                    collection_name=f"quira_{self.user_id}",
-                    query_vector=embedding.tolist(),
-                    limit=10
-                )
-            else:
-                hits = self.qdrant.search(
-                    collection_name=f"quira_{self.user_id}",
-                    query_vector=embedding.tolist(),
-                    limit=10
-                )
-            # Transform hits to chunks
-            # Example hit format depends on client, we assume a standard dict response
-            return [{"id": hit.id, "payload": hit.payload} for hit in hits]
-        except Exception:
+            hits = await self.vector_store.search(
+                collection_name=f"quira_{self.user_id}",
+                query_vector=embedding.tolist() if hasattr(embedding, "tolist") else list(embedding),
+                limit=10
+            )
+            return hits
+        except Exception as e:
+            logger.warning(f"Search failed, using mocks: {e}")
             return [{"id": "mock_id", "payload": {"text": "mock chunk text"}}]
 
     async def on_submit(self, full_query: str) -> List[Dict[str, Any]]:
@@ -180,15 +158,13 @@ class SpeculativeRetriever:
         start_time = time.time()
         
         query_hash = self._hash_query(full_query)
-        redis_key = f"user:{self.user_id}:speculative:{query_hash}"
+        cache_key = f"user:{self.user_id}:speculative:{query_hash}"
         
         # Check cache
         try:
-            if asyncio.iscoroutinefunction(self.redis.get):
-                cached = await self.redis.get(redis_key)
-            else:
-                cached = self.redis.get(redis_key)
-        except Exception:
+            cached = await self.cache.get(cache_key)
+        except Exception as e:
+            logger.warning(f"Cache get failed: {e}")
             cached = None
             
         if cached:

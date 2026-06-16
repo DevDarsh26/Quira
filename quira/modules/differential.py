@@ -16,6 +16,8 @@ class GCReport:
         self.evicted_count = evicted_count
         self.protected_anchors = protected_anchors
 
+from quira.providers.base import VectorStore
+
 class DifferentialRetriever:
     """
     Module 3 - Differential Retrieval:
@@ -24,9 +26,9 @@ class DifferentialRetriever:
     - Runs Delta Retrieval to fetch only genuinely new chunks
     - Garbage collects irrelevant chunks every 3 turns
     """
-    def __init__(self, user_id: str, qdrant_client: Any, embed_func: Optional[Any] = None):
+    def __init__(self, user_id: str, vector_store: VectorStore, embed_func: Optional[Any] = None):
         self.user_id = user_id
-        self.qdrant = qdrant_client
+        self.vector_store = vector_store
         
         if embed_func:
             self.embed_func = embed_func
@@ -105,22 +107,16 @@ class DifferentialRetriever:
             "timestamp": time.time()
         })
         
-        # Search Qdrant for top 15 candidates
+        # Search VectorStore for top 15 candidates
         try:
-            if asyncio.iscoroutinefunction(self.qdrant.search):
-                hits = await self.qdrant.search(
-                    collection_name=f"quira_{self.user_id}",
-                    query_vector=current_emb.tolist(),
-                    limit=15
-                )
-            else:
-                hits = self.qdrant.search(
-                    collection_name=f"quira_{self.user_id}",
-                    query_vector=current_emb.tolist(),
-                    limit=15
-                )
-            candidates = [{"id": hit.id, "text": hit.payload.get("text", ""), "embedding": np.array(hit.payload.get("embedding", current_emb)), "hit_count": 0} for hit in hits]
-        except Exception:
+            hits = await self.vector_store.search(
+                collection_name=f"quira_{self.user_id}",
+                query_vector=current_emb.tolist() if hasattr(current_emb, "tolist") else list(current_emb),
+                limit=15
+            )
+            candidates = [{"id": hit["id"], "text": hit["payload"].get("text", ""), "embedding": np.array(hit["payload"].get("embedding", current_emb)), "hit_count": 0} for hit in hits]
+        except Exception as e:
+            logger.warning(f"Search failed, using mocks: {e}")
             candidates = [{"id": f"mock_{i}", "text": f"mock {i}", "embedding": current_emb, "hit_count": 0} for i in range(15)]
             
         # Differential Retrieval Logic
