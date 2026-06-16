@@ -26,7 +26,7 @@ export default function DocsPage() {
       </p>
       <ul>
         <li>Uses advanced debounce logic to detect typing speed.</li>
-        <li>Searches the vector store speculatively before the user even presses 'Send'.</li>
+        <li>Searches the vector store speculatively before the user even presses &apos;Send&apos;.</li>
         <li>Reduces perceived retrieval latency to <strong>zero</strong>.</li>
       </ul>
 
@@ -43,7 +43,7 @@ export default function DocsPage() {
 
       <h2 id="differential-context" className="scroll-m-20 border-b pb-2 mt-12">Differential Context</h2>
       <p>
-        Quira maintains an internal conversational state and a <em>context pool</em>. Instead of retrieving everything from scratch on every turn, it computes a "delta" and only pulls new information that hasn't been discussed yet.
+        Quira maintains an internal conversational state and a <em>context pool</em>. Instead of retrieving everything from scratch on every turn, it computes a &quot;delta&quot; and only pulls new information that hasn&apos;t been discussed yet.
       </p>
 
       {/* --- ARCHITECTURE --- */}

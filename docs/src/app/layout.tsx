@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import Link from "next/link";
-import { FileText, Cpu } from "lucide-react";
+import Image from "next/image";
+import { FileText } from "lucide-react";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -35,10 +36,8 @@ export default function RootLayout({
         <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
           <div className="container mx-auto px-6 h-16 flex items-center justify-between">
             <Link href="/" className="flex items-center gap-3 font-bold text-xl tracking-tighter hover:opacity-80 transition-opacity">
-              <div className="flex items-center justify-center p-1 rounded-lg bg-white/5 border border-white/10">
-                <img src="/quira_logo.png" alt="Quira Logo" className="w-6 h-6 object-contain" />
-              </div>
-              Quira
+              <Image src="/quira_logo.png" alt="Quira Logo" width={36} height={36} className="object-contain rounded-md shadow-sm" priority />
+              <span className="hidden sm:inline-block">Quira</span>
             </Link>
             
             <nav className="flex items-center gap-6 text-sm font-medium text-muted-foreground">
