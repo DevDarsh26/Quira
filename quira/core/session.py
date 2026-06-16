@@ -1,6 +1,9 @@
+from __future__ import annotations
 from dataclasses import dataclass, field
-from typing import Dict, Any, List, Optional
-from fastapi import WebSocket
+from typing import Dict, Any, List, Optional, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from fastapi import WebSocket
 
 @dataclass
 class UserSession:
