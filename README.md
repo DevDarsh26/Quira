@@ -1,4 +1,4 @@
-<div align="center">
+<div align="center"> 
   <img src="assets/quira_logo.png" alt="Quira Logo" width="180" />
   <h1>Quira</h1>
   <p><strong>Lightning-Fast, Context-Dense RAG Framework for Python</strong></p>
