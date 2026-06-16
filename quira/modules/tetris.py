@@ -30,15 +30,17 @@ class PackedContext:
         self.chunks = chunks
         self.stats = stats
 
+from quira.providers.base import LLMProvider
+
 class ContextTetris:
     """
     Module 2 - Context Tetris:
     Picks the BEST chunks using 4-dimensional scoring.
-    Compresses based on score using Groq.
+    Compresses based on score using an LLM.
     U-shape ordering for optimal LLM attention.
     """
-    def __init__(self, groq_client: Any, spacy_model: Any):
-        self.groq = groq_client
+    def __init__(self, llm_provider: LLMProvider, spacy_model: Any = None):
+        self.llm = llm_provider
         self.nlp = spacy_model
         
         try:
@@ -88,7 +90,7 @@ class ContextTetris:
         # Density
         text = chunk.get("text", "")
         tokens = self._count_tokens(text)
-        if tokens == 0:
+        if tokens == 0 or not self.nlp:
             density = 0.0
         else:
             doc = self.nlp(text)
@@ -100,16 +102,15 @@ class ContextTetris:
 
     async def compress_chunk(self, chunk: Dict[str, Any], level: str) -> Dict[str, Any]:
         text = chunk.get("text", "")
-        doc = self.nlp(text)
         
-        # Extract must-preserve items
-        preserved = []
-        for ent in doc.ents:
-            if ent.label_ in {"PERSON", "ORG", "GPE", "LOC", "DATE", "TIME", "PERCENT", "MONEY", "QUANTITY", "CARDINAL"}:
-                preserved.append(ent.text)
-                
-        # In a real scenario, we'd also detect code blocks (via markdown parsing) and URLs (via regex).
-        preserved_str = ", ".join(set(preserved))
+        preserved_str = ""
+        if self.nlp:
+            doc = self.nlp(text)
+            preserved = []
+            for ent in doc.ents:
+                if ent.label_ in {"PERSON", "ORG", "GPE", "LOC", "DATE", "TIME", "PERCENT", "MONEY", "QUANTITY", "CARDINAL"}:
+                    preserved.append(ent.text)
+            preserved_str = ", ".join(set(preserved))
         
         if level == "light":
             prompt = f"Remove filler sentences but keep all facts, numbers, and entities. MUST PRESERVE: {preserved_str}\n\nText: {text}"
@@ -117,19 +118,7 @@ class ContextTetris:
             prompt = f"Reduce to 2-3 sentence summary. MUST PRESERVE all named entities, numbers, dates: {preserved_str}\n\nText: {text}"
 
         try:
-            # Check if groq_client has async create or sync
-            import asyncio
-            if asyncio.iscoroutinefunction(self.groq.chat.completions.create):
-                response = await self.groq.chat.completions.create(
-                    model="llama-3.1-8b-instant",
-                    messages=[{"role": "system", "content": prompt}]
-                )
-            else:
-                response = self.groq.chat.completions.create(
-                    model="llama-3.1-8b-instant",
-                    messages=[{"role": "system", "content": prompt}]
-                )
-            compressed_text = response.choices[0].message.content
+            compressed_text = await self.llm.complete(prompt=prompt)
         except Exception as e:
             logger.warning(f"Compression failed, using original text: {e}")
             compressed_text = text
