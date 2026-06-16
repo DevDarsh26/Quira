@@ -1,0 +1,47 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "quira"
+version = "0.1.0"
+description = "Faster and smarter Retrieval Augmented Generation using Speculative Retrieval and Context Tetris."
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+authors = [{name = "Darsh Modi"}]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
+dependencies = [
+    "fastembed>=0.2.0",
+    "numpy>=1.24.0",
+    "qdrant-client>=1.7.0",
+    "tiktoken>=0.5.0",
+    "spacy>=3.7.0",
+    "groq>=0.4.0",
+    "pymupdf>=1.23.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/DevDarsh26/quira"
+Repository = "https://github.com/DevDarsh26/quira"
+Documentation = "https://github.com/DevDarsh26/quira#readme"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["quira*"]
+exclude = ["demo*"]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "black>=23.0.0",
+    "mypy>=1.5.0"
+]
