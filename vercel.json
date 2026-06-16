@@ -1,0 +1,6 @@
+{
+  "framework": "nextjs",
+  "buildCommand": "cd docs && npm install && npm run build",
+  "outputDirectory": "docs/.next",
+  "installCommand": "echo 'Skipping root install, installing in docs' && npm install --prefix docs"
+}
