@@ -7,15 +7,15 @@
   <br/>
 
   <a href="https://pypi.org/project/quira/"><img src="https://img.shields.io/pypi/v/quira?color=0969da&style=for-the-badge&logo=pypi&logoColor=white" alt="PyPI" /></a>
-  <a href="https://github.com/DevDarsh26/quira/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-22c55e.svg?style=for-the-badge" alt="License" /></a>
+  <a href="https://github.com/DevDarsh26/Quira/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-22c55e.svg?style=for-the-badge" alt="License" /></a>
   <a href="https://www.python.org/"><img src="https://img.shields.io/badge/Python-3.11+-f59e0b.svg?style=for-the-badge&logo=python&logoColor=white" alt="Python" /></a>
-  <a href="https://github.com/DevDarsh26/quira"><img src="https://img.shields.io/badge/GitHub-DevDarsh26-181717?style=for-the-badge&logo=github" alt="GitHub" /></a>
+  <a href="https://github.com/DevDarsh26/Quira"><img src="https://img.shields.io/badge/GitHub-DevDarsh26-181717?style=for-the-badge&logo=github" alt="GitHub" /></a>
 
   <br/><br/>
 
   <a href="#-quickstart">Quickstart</a> &nbsp;·&nbsp;
   <a href="#-how-it-works">How It Works</a> &nbsp;·&nbsp;
-  <a href="#-benchmarks">Benchmarks</a> &nbsp;·&nbsp;
+  <a href="#-why-quira-saves-you-money">Cost Savings</a> &nbsp;·&nbsp;
   <a href="#-api-reference">API</a> &nbsp;·&nbsp;
   <a href="#-contributing">Contributing</a>
 </div>
@@ -24,130 +24,134 @@
 
 ---
 
-## 🔥 The Problem
+## 🔥 The Problem with Traditional RAG
 
-Traditional RAG is **slow** and **wasteful**:
+Traditional Retrieval-Augmented Generation (RAG) is **slow** and **expensive**:
 
-```
-User types query → Hits Enter → WAIT → Vector search → WAIT → Stuff 10 chunks → WAIT → LLM response
-                                 ⏱️ 1.5s avg latency, 65% of context is noise
-```
+1. **High Latency:** User types query → Hits Enter → WAIT → Vector search → WAIT → Stuff 10 large chunks into LLM → WAIT → Response.
+2. **"Lost in the Middle" Syndrome:** You stuff massive chunks of text into the context window, most of which is useless filler. The LLM loses track of the actual facts.
+3. **Expensive Redundancy:** On every turn of the conversation, you re-fetch and re-process the exact same context over and over again.
+
+---
 
 ## ✨ The Quira Solution
 
-Quira **predicts** what users need *before* they finish typing, compresses context to maximize density, and tracks conversation state to eliminate redundant fetches:
+Quira solves this by **predicting** what users need *before* they finish typing, dynamically compressing context to maximize density, and statefully tracking the conversation.
 
-```
-User starts typing → Quira searches speculatively → User hits Enter → Context already cached!
-                     → Differential fetch (only new chunks) → Context Tetris (compress + score)
-                                 ⏱️ 210ms avg latency, 94% context density
+> **⏱️ 85% faster latency | 🧠 2.6× denser context | 💰 40% cheaper token costs**
+
+### 🏗️ Architecture
+
+```mermaid
+graph TD
+    User([User Typing]) -->|WebSocket Stream| Speculative[1. Speculative Retriever]
+    Speculative -->|Predictive Search| Cache[(Redis Cache)]
+    UserSubmit([User Hits Enter]) --> Diff[3. Differential Retriever]
+    Diff -->|Cosine Similarity > 0.6?| DeltaFetch{Fetch Delta Chunks Only}
+    Cache --> DeltaFetch
+    DeltaFetch --> Tetris[2. Context Tetris]
+    Tetris -->|Relevance, Recency, Density| Groq[Groq LLM Compression]
+    Groq -->|U-Shape Order| FinalContext[Packed Context]
+    FinalContext --> MainLLM{Your Main LLM}
 ```
 
 ---
 
 ## 📦 Quickstart
 
-### Install
+### 1. Install via pip
 ```bash
 pip install quira
 ```
 
-### Usage
+### 2. Basic Setup
+Quira does not hardcode API keys. **You bring your own clients**, meaning you have full control over your usage and billing.
+
 ```python
 import asyncio
 from quira import quiraPipeline, UserSession
+from qdrant_client import QdrantClient
+from groq import Groq
+import spacy
+from fastembed import TextEmbedding
 
 async def main():
-    # Initialize with your own clients
+    # 1. Initialize your clients (Bring Your Own Keys)
+    qdrant = QdrantClient(":memory:") # Or your cloud Qdrant URL
+    redis_mock = None # Pass a real Upstash Redis client in production
+    groq = Groq(api_key="your_groq_api_key") 
+    spacy_model = spacy.load("en_core_web_sm")
+    
+    embed_model = TextEmbedding("sentence-transformers/all-MiniLM-L6-v2")
+    embed_func = lambda text: list(embed_model.embed([text]))[0]
+
+    # 2. Initialize Quira Pipeline
     pipeline = quiraPipeline(
         qdrant_client=qdrant,
-        redis_client=redis,
+        redis_client=redis_mock,
         groq_client=groq,
-        embed_func=my_embed_func,
-        spacy_model=my_spacy_model
+        embed_func=embed_func,
+        spacy_model=spacy_model
     )
 
+    # 3. Create a session for a specific user
     session = UserSession(user_id="user_123")
 
-    # 🏎️ Speculative fetch while user types
+    # 4. Ingest some documents!
+    print("Ingesting document...")
+    await pipeline.ingestor.ingest_text("user_123", "Our return policy allows returns within 30 days of purchase.")
+
+    # 5. 🏎️ Speculative fetch (triggers while user is typing in the UI)
     await pipeline.handle_typing_event(session, "What is the re")
 
-    # 🎯 Submit — context is already warm!
+    # 6. 🎯 Submit (Context is already warm from the speculative fetch!)
     answer = await pipeline.process_submission(
         session, "What is the return policy?"
     )
     print(answer)
 
-asyncio.run(main())
-```
-
-### Ingest PDFs
-```python
-# Parse, chunk, embed, and store — one line.
-chunks = await pipeline.ingestor.ingest_pdf("user_123", "docs/return_policy.pdf")
-print(f"Indexed {chunks} chunks into Qdrant")
+if __name__ == "__main__":
+    asyncio.run(main())
 ```
 
 ---
 
-## ⚙️ How It Works
+## ⚙️ How It Works: The 4 Core Modules
 
-Quira is built on **4 core modules** that work together as a unified pipeline:
+Quira is built on 4 beautifully orchestrated modules:
 
-<table>
-<tr>
-<td width="50%">
+### 🏎️ Module 1: Speculative Retrieval
+Instead of waiting for the user to hit "Enter", Quira listens to keystrokes. Using adaptive debouncing (250ms–600ms based on typing speed), it fires Qdrant searches in the background. By the time the user hits Enter, the vector search is already cached in Redis.
 
-### 🏎️ Module 1 — Speculative Retrieval
-Listens to user keystrokes via WebSocket. Uses adaptive debouncing (250ms–600ms based on typing speed) to fire Qdrant searches **before** the user submits. Results are cached in Redis with SHA-256 hashed keys.
+### 🧩 Module 2: Context Tetris
+Not all retrieved context is equal. Quira scores every chunk on **4 dimensions**:
+1. **Relevance** (Cosine similarity)
+2. **Recency** (Half-life decay for older chunks)
+3. **Uniqueness** (Penalizes duplicate information)
+4. **Density** (Entity-to-token ratio)
 
-</td>
-<td width="50%">
+It then uses the blazing-fast **Groq LLM** to compress filler text out of the chunks, and orders them in a **U-shape** (best chunks at the very start and end) to prevent the LLM from "losing" facts in the middle of the prompt.
 
-### 🧩 Module 2 — Context Tetris
-Scores every chunk on **4 dimensions**: Relevance, Recency, Uniqueness, and Density. Uses Groq LLM to compress filler text. Orders chunks in a **U-shape** (best chunks at start and end) to combat "Lost in the Middle" syndrome.
+### 🔄 Module 3: Differential Retrieval
+In a normal RAG chat, asking a follow-up question triggers a completely new vector search. Quira maintains a **Context Pool**. It measures the cosine similarity between the current and previous query. If the topic hasn't changed drastically, Quira only fetches **Delta Chunks** (new information) and merges it, saving massive amounts of redundant processing.
 
-</td>
-</tr>
-<tr>
-<td width="50%">
+### 📄 Module 4: Document Ingestion
+Built-in PyMuPDF parsing with overlapping text chunking (default 1000 chars / 200 overlap) to prevent sentence fragmentation. Automatically generates embeddings and upserts them directly into Qdrant.
 
-### 🔄 Module 3 — Differential Retrieval
-Maintains a stateful **Context Pool** across conversation turns. Measures cosine similarity between consecutive queries. If similarity > 0.6, fetches only **delta chunks**. Garbage-collects stale context when topics shift.
+---
 
-</td>
-<td width="50%">
+## 💰 Why Quira Saves You Money
 
-### 📄 Module 4 — Document Ingestion
-Parses PDFs with PyMuPDF. Splits text into **overlapping chunks** (1000 chars / 200 overlap by default) to prevent sentence fragmentation. Generates embeddings and upserts directly into Qdrant.
+You might wonder: *"Doesn't using Groq for Context Tetris cost extra money?"*
 
-</td>
-</tr>
-</table>
-
-### Architecture
-```
-┌──────────────────────────────────────────────────────────────┐
-│                        QUIRA PIPELINE                        │
-│                                                              │
-│  ┌─────────────┐    ┌──────────────┐    ┌────────────────┐  │
-│  │  Speculative │───▶│ Differential │───▶│ Context Tetris │  │
-│  │  Retriever   │    │  Retriever   │    │  (Compress +   │  │
-│  │  (Predict)   │    │  (Delta)     │    │   Score + Pack)│  │
-│  └──────┬───────┘    └──────┬───────┘    └───────┬────────┘  │
-│         │                   │                    │           │
-│    ┌────▼────┐         ┌────▼────┐          ┌────▼────┐     │
-│    │  Redis  │         │ Qdrant  │          │  Groq   │     │
-│    │ (Cache) │         │(Vectors)│          │  (LLM)  │     │
-│    └─────────┘         └─────────┘          └─────────┘     │
-└──────────────────────────────────────────────────────────────┘
-```
+**No, it actually saves you up to 40% on your bill.** Here's why:
+1. **Groq is Hyper-Cheap:** The `llama-3.1-8b-instant` model used to compress context costs fractions of a penny.
+2. **Your Main LLM is Expensive:** You are likely sending your final prompt to a heavy model like GPT-4o or Claude 3.5 Sonnet. By using cheap Groq tokens to *compress* the context, you send significantly fewer tokens to the expensive main LLM.
+3. **Differential Caching:** You stop re-fetching and re-sending identical chunks of text on every single conversational turn.
 
 ---
 
 ## 📊 Benchmarks
-
-<div align="center">
 
 | Metric | Traditional RAG | **Quira** | Improvement |
 |:------:|:--------------:|:---------:|:-----------:|
@@ -155,8 +159,6 @@ Parses PDFs with PyMuPDF. Splits text into **overlapping chunks** (1000 chars / 
 | **Context Density** | 35% | **94%** | 🧠 **2.6× denser** |
 | **Token Cost** | Baseline | **-40%** | 💰 **40% cheaper** |
 | **Redundant Fetches** | Every turn | **Delta only** | ♻️ **~70% fewer** |
-
-</div>
 
 ---
 
@@ -173,18 +175,16 @@ The main pipeline class. Accepts your own client instances.
 | `ingestor.ingest_text(user_id, text)` | Chunk, embed, and store raw text |
 
 ### `UserSession(user_id, websocket=None)`
-Tracks per-user conversation state, context pools, and turn history.
+Tracks per-user conversation state, context pools, and turn history. Keeps different users' data strictly isolated.
 
 ---
 
 ## 🔒 Security
 
-Quira is regularly audited with **Bandit** (Python AST security linter):
-
-- ✅ **0 vulnerabilities** across all severity levels
+Quira is regularly audited:
+- ✅ **0 vulnerabilities** across all severity levels via Bandit
 - ✅ SHA-256 hashing for all cache keys (no weak hashes)
-- ✅ No hardcoded secrets or credentials
-- ✅ Safe file I/O with proper exception handling
+- ✅ **Bring Your Own Keys** architecture — absolutely zero API keys or credentials are included or required by the library itself. You retain 100% control over your API secrets.
 
 ---
 
@@ -194,16 +194,18 @@ Contributions are welcome! Please open an issue or submit a pull request.
 
 ```bash
 # Clone the repo
-git clone https://github.com/DevDarsh26/quira.git
-cd quira
+git clone https://github.com/DevDarsh26/Quira.git
+cd Quira
 
 # Create a virtual environment
 python -m venv .venv
-.venv\Scripts\activate   # Windows
-source .venv/bin/activate  # macOS/Linux
+source .venv/bin/activate  # Windows: .venv\Scripts\activate
 
 # Install in editable mode with dev dependencies
 pip install -e ".[dev]"
+
+# Run tests
+pytest tests/
 ```
 
 ---
