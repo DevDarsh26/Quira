@@ -17,6 +17,9 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://quira.darshmodii.in"),
+  alternates: {
+    canonical: "/",
+  },
   title: "Quira | High-Performance RAG Framework",
   description: "Quira is a token-efficient, zero-latency Retrieval Augmented Generation (RAG) framework featuring Speculative Retrieval and Context Tetris.",
   keywords: ["RAG", "LLM", "Vector Database", "Speculative Retrieval", "Context Tetris", "Generative AI", "Python", "AI Framework"],
@@ -49,6 +52,41 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased dark`}
     >
       <body className="min-h-full flex flex-col bg-background text-foreground selection:bg-primary/30">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@graph": [
+                {
+                  "@type": "WebSite",
+                  "@id": "https://quira.darshmodii.in/#website",
+                  "url": "https://quira.darshmodii.in",
+                  "name": "Quira Framework",
+                  "description": "High-Performance RAG Framework for the Modern AI Stack",
+                  "publisher": {
+                    "@type": "Person",
+                    "name": "Darsh Modii"
+                  }
+                },
+                {
+                  "@type": "SoftwareApplication",
+                  "@id": "https://quira.darshmodii.in/#software",
+                  "name": "Quira",
+                  "description": "Quira is a token-efficient, zero-latency Retrieval Augmented Generation (RAG) framework featuring Speculative Retrieval and Context Tetris.",
+                  "url": "https://quira.darshmodii.in",
+                  "applicationCategory": "DeveloperApplication",
+                  "operatingSystem": "OS Independent",
+                  "offers": {
+                    "@type": "Offer",
+                    "price": "0.00",
+                    "priceCurrency": "USD"
+                  }
+                }
+              ]
+            })
+          }}
+        />
         
         {/* Sleek Minimal Navbar */}
         <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
