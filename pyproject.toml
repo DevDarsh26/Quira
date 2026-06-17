@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "quira"
-version = "0.2.0"
+version = "0.2.1"
 description = "Faster and smarter Retrieval Augmented Generation using Speculative Retrieval and Context Tetris."
 readme = "README.md"
 requires-python = ">=3.11"
