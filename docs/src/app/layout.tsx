@@ -20,9 +20,9 @@ export const metadata: Metadata = {
   alternates: {
     canonical: "/",
   },
-  title: "Quira | High-Performance RAG Framework",
-  description: "Quira is a token-efficient, zero-latency Retrieval Augmented Generation (RAG) framework featuring Speculative Retrieval and Context Tetris.",
-  keywords: ["RAG", "LLM", "Vector Database", "Speculative Retrieval", "Context Tetris", "Generative AI", "Python", "AI Framework"],
+  title: "Quira | Fast RAG Framework for Python",
+  description: "Quira is a blazing fast, token-efficient Retrieval Augmented Generation (RAG) framework featuring Speculative Retrieval and Context Tetris for zero-latency AI.",
+  keywords: ["RAG", "Fast RAG", "Retrieval Augmented Generation", "LLM", "Vector Database", "Speculative Retrieval", "Context Tetris", "Generative AI", "Python", "AI Framework", "Open Source RAG", "Python RAG framework", "Token efficient RAG", "Zero-latency RAG", "Fast Retrieval Augmented Generation"],
   authors: [{ name: "Darsh Modii" }],
   openGraph: {
     title: "Quira | High-Performance RAG Framework",

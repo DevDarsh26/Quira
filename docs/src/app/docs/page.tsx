@@ -3,8 +3,9 @@ import { Terminal, Zap, Puzzle, GitPullRequest, Layers, Code2 } from "lucide-rea
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Documentation | Quira",
-  description: "Learn how to install, configure, and use Quira's advanced RAG capabilities including Speculative Retrieval, Context Tetris, and Provider Abstractions.",
+  title: "Documentation | Quira - Fast RAG Framework",
+  description: "Learn how to install, configure, and use Quira's advanced RAG capabilities including Speculative Retrieval, Context Tetris, and Provider Abstractions for zero-latency AI.",
+  keywords: ["RAG Documentation", "Fast RAG", "Retrieval Augmented Generation", "Python RAG Tutorial", "Speculative Retrieval", "Context Tetris", "Quira Framework"],
   alternates: {
     canonical: "/docs",
   },
