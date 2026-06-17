@@ -145,6 +145,35 @@ pipeline = quiraPipeline({"\n"}
         </div>
       </section>
 
+      {/* --- RESILIENCE & FALLBACKS --- */}
+      <section id="resilience" className="scroll-mt-32 mb-24">
+        <h2 className="text-2xl font-semibold tracking-tight flex items-center gap-3 mb-6">
+          <svg className="w-5 h-5 text-red-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+          Resilience &amp; Fallbacks
+        </h2>
+        <p className="text-muted-foreground leading-relaxed mb-6">
+          Quira is built for production reliability. It features a robust <strong>Exception Hierarchy</strong> (<code>QuiraError</code>) and transparent <strong>Retry &amp; Fallback Logic</strong>. All LLM and Vector Store network calls automatically retry up to 3 times with exponential backoff.
+        </p>
+
+        <div className="rounded-xl overflow-hidden border border-border/60 bg-[#0a0a0a] shadow-xl">
+          <div className="flex items-center px-4 py-3 bg-white/[0.02] border-b border-white/5 gap-2">
+            <div className="w-2.5 h-2.5 rounded-full bg-zinc-700 hover:bg-red-500 transition-colors" />
+            <div className="w-2.5 h-2.5 rounded-full bg-zinc-700 hover:bg-yellow-500 transition-colors" />
+            <div className="w-2.5 h-2.5 rounded-full bg-zinc-700 hover:bg-green-500 transition-colors" />
+            <span className="ml-3 text-xs font-medium text-zinc-500 font-mono">pipeline.py</span>
+          </div>
+          <div className="p-6 overflow-x-auto text-sm font-mono leading-relaxed text-zinc-300">
+            <pre><code><span className="text-zinc-500"># Seamlessly failover to a backup provider if the primary goes down</span>{"\n"}
+pipeline = quiraPipeline({"\n"}
+    llm=<span className="text-green-400">&quot;anthropic/claude-3-opus&quot;</span>,{"\n"}
+    fallback_llm=<span className="text-green-400">&quot;openai/gpt-4o&quot;</span>,{"\n"}
+    vector_store=<span className="text-green-400">&quot;pinecone&quot;</span>,{"\n"}
+    fallback_vector_store=<span className="text-green-400">&quot;qdrant&quot;</span>{"\n"}
+){"\n"}</code></pre>
+          </div>
+        </div>
+      </section>
+
       {/* --- INTEGRATIONS --- */}
       <section id="integrations" className="scroll-mt-32">
         <h2 className="text-2xl font-semibold tracking-tight flex items-center gap-3 mb-6">

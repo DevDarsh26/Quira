@@ -140,6 +140,24 @@ Built-in PyMuPDF parsing with overlapping text chunking (default 1000 chars / 20
 
 ---
 
+## 🛡️ Resilience & Fallbacks
+
+Quira is built for production reliability. It features a robust **Exception Hierarchy** (`QuiraError`) and transparent **Retry & Fallback Logic**.
+
+- **Exponential Backoff:** All LLM and Vector Store network calls automatically retry up to 3 times with exponential backoff.
+- **Provider Fallbacks:** You can provide a secondary `fallback_llm` or `fallback_vector_store`. If your primary provider goes down, Quira will seamlessly failover to the backup provider without dropping the user's request.
+
+```python
+pipeline = quiraPipeline(
+    llm="anthropic/claude-3-opus",
+    fallback_llm="openai/gpt-4o", # Used if Anthropic goes down!
+    vector_store="pinecone",
+    fallback_vector_store="qdrant"
+)
+```
+
+---
+
 ## 💰 Why Quira Saves You Money
 
 You might wonder: *"Doesn't using Groq for Context Tetris cost extra money?"*
