@@ -13,6 +13,7 @@ from quira.providers.base import VectorStore, CacheBackend, LLMProvider
 from quira.providers.vector import QdrantStore, PineconeStore, ChromaStore, WeaviateStore
 from quira.providers.cache import RedisCache, InMemoryCache, DiskCache
 from quira.providers.llm import GroqProvider, OpenAIProvider, AnthropicProvider, OllamaProvider
+from quira.providers.fallback import FallbackVectorStore, FallbackLLMProvider
 
 logger = logging.getLogger("quira.pipeline")
 
@@ -35,6 +36,9 @@ class quiraPipeline:
         qdrant_client: Optional[Any] = None,
         redis_client: Optional[Any] = None,
         groq_client: Optional[Any] = None,
+        # Fallbacks
+        fallback_vector_store: Union[str, VectorStore, Any, None] = None,
+        fallback_llm: Union[str, LLMProvider, Any, None] = None,
     ):
         # Resolve Vector Store
         if qdrant_client:
@@ -56,6 +60,28 @@ class quiraPipeline:
         else:
             # Fallback for raw clients passed as positional/kwargs without the specific name
             self.vector_store = QdrantStore(client=vector_store)
+
+        if fallback_vector_store:
+            if isinstance(fallback_vector_store, VectorStore):
+                fb_vs = fallback_vector_store
+            elif isinstance(fallback_vector_store, str):
+                v_type = fallback_vector_store.lower()
+                if v_type == "qdrant":
+                    fb_vs = QdrantStore()
+                elif v_type == "pinecone":
+                    fb_vs = PineconeStore()
+                elif v_type == "chroma":
+                    fb_vs = ChromaStore()
+                elif v_type == "weaviate":
+                    fb_vs = WeaviateStore()
+                else:
+                    raise ValueError(f"Unknown fallback_vector_store string: {fallback_vector_store}")
+            else:
+                fb_vs = QdrantStore(client=fallback_vector_store)
+            self.vector_store = FallbackVectorStore(primary=self.vector_store, fallback=fb_vs)
+        else:
+            # Wrap with FallbackVectorStore anyway to get the retry logic
+            self.vector_store = FallbackVectorStore(primary=self.vector_store)
 
         # Resolve Cache
         if redis_client:
@@ -97,6 +123,31 @@ class quiraPipeline:
                 raise ValueError(f"Unknown LLM provider string: {llm}")
         else:
             self.llm = GroqProvider(client=llm, embed_func=embed_func)
+
+        if fallback_llm:
+            if isinstance(fallback_llm, LLMProvider):
+                fb_llm = fallback_llm
+            elif isinstance(fallback_llm, str):
+                parts = fallback_llm.split("/", 1)
+                provider_name = parts[0].lower()
+                model_name = parts[1] if len(parts) > 1 else None
+                
+                if provider_name == "groq":
+                    fb_llm = GroqProvider(default_model=model_name or "llama-3.1-8b-instant", embed_func=embed_func)
+                elif provider_name == "openai":
+                    fb_llm = OpenAIProvider(default_model=model_name or "gpt-4o", embed_func=embed_func)
+                elif provider_name == "anthropic":
+                    fb_llm = AnthropicProvider(default_model=model_name or "claude-3-5-sonnet-20240620", embed_func=embed_func)
+                elif provider_name == "ollama":
+                    fb_llm = OllamaProvider(default_model=model_name or "llama3", embed_func=embed_func)
+                else:
+                    raise ValueError(f"Unknown fallback_llm string: {fallback_llm}")
+            else:
+                fb_llm = GroqProvider(client=fallback_llm, embed_func=embed_func)
+            self.llm = FallbackLLMProvider(primary=self.llm, fallback=fb_llm)
+        else:
+            # Wrap with FallbackLLMProvider anyway to get the retry logic
+            self.llm = FallbackLLMProvider(primary=self.llm)
 
         # Default embed func if none provided, taken from the LLM provider
         self.embed_func = embed_func if embed_func else self.llm.embed
