@@ -58,8 +58,8 @@ export default function RootLayout({
               <span className="hidden sm:inline-block">Quira</span>
             </Link>
             
-            <nav className="flex items-center gap-6 text-sm font-medium text-muted-foreground">
-              <Link href="/docs" className="hover:text-foreground transition-colors hidden sm:block">Documentation</Link>
+            <nav className="flex items-center gap-4 sm:gap-6 text-sm font-medium text-muted-foreground">
+              <Link href="/docs" className="hover:text-foreground transition-colors">Docs</Link>
               <Link href="/#quickstart" className="hover:text-foreground transition-colors hidden sm:block">Quickstart</Link>
               
               <div className="w-px h-4 bg-border hidden sm:block"></div>

@@ -38,20 +38,20 @@ export function ScrollSpySidebar() {
   }, []);
 
   return (
-    <aside className="w-full md:w-64 shrink-0 hidden md:block">
-      <div className="sticky top-24 space-y-6">
+    <aside className="w-full md:w-64 shrink-0 mb-8 md:mb-0">
+      <div className="md:sticky md:top-24 md:space-y-6">
         <div>
-          <h4 className="font-semibold mb-4 text-foreground tracking-tight text-sm uppercase text-muted-foreground">On this page</h4>
-          <div className="flex flex-col gap-2.5 text-sm border-l border-border/50">
+          <h4 className="font-semibold mb-3 md:mb-4 text-foreground tracking-tight text-xs md:text-sm uppercase text-muted-foreground hidden md:block">On this page</h4>
+          <div className="flex flex-row md:flex-col gap-2 md:gap-2.5 text-sm md:border-l md:border-border/50 overflow-x-auto pb-2 md:pb-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             {SECTIONS.map((section) => (
               <Link
                 key={section.id}
                 href={`#${section.id}`}
                 className={cn(
-                  "pl-4 py-0.5 transition-all relative border-l-[3px] -ml-[2px]",
+                  "whitespace-nowrap px-3 py-1.5 md:px-0 md:pl-4 md:py-0.5 transition-all relative md:border-l-[3px] md:-ml-[2px] rounded-full md:rounded-none border border-border/50 md:border-transparent md:border-l-transparent",
                   activeId === section.id
-                    ? "text-primary font-medium border-primary"
-                    : "text-muted-foreground border-transparent hover:text-foreground hover:border-muted-foreground/50"
+                    ? "text-primary font-medium bg-primary/10 md:bg-transparent md:border-l-primary border-primary/20 md:border-y-transparent md:border-r-transparent"
+                    : "text-muted-foreground md:border-l-transparent hover:text-foreground bg-background hover:bg-muted/50 md:bg-transparent md:hover:bg-transparent md:hover:border-l-muted-foreground/50"
                 )}
               >
                 {section.label}

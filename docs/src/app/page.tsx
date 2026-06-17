@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Terminal, Zap, Layers, Puzzle, GitPullRequest, ArrowRight } from "lucide-react";
+import Link from "next/link";
 
 export default function Home() {
   return (
@@ -25,9 +26,11 @@ export default function Home() {
         </p>
         
         <div className="flex flex-col sm:flex-row gap-4 mt-4 w-full sm:w-auto">
-          <Button size="lg" className="rounded-full px-8 gap-2 text-base h-12">
-            Get Started <ArrowRight className="w-4 h-4" />
-          </Button>
+          <Link href="/docs">
+            <Button size="lg" className="rounded-full px-8 gap-2 text-base h-12">
+              Get Started <ArrowRight className="w-4 h-4" />
+            </Button>
+          </Link>
           <a href="https://github.com/DevDarsh26/Quira" target="_blank" rel="noreferrer">
             <Button size="lg" variant="outline" className="rounded-full px-8 gap-2 text-base h-12 w-full sm:w-auto">
               View on GitHub
