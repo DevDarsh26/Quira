@@ -1,4 +1,0 @@
-User-agent: *
-Allow: /
-
-Sitemap: https://quira.darshmodii.in/sitemap.xml
