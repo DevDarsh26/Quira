@@ -208,7 +208,7 @@ Quira is regularly audited:
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please open an issue or submit a pull request.
+Contributions are needed! Please open an issue or submit a pull request.
 
 ```bash
 # Clone the repo
