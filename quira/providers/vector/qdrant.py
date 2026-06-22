@@ -13,7 +13,10 @@ class QdrantStore(VectorStore):
         else:
             try:
                 from qdrant_client import QdrantClient
-                self.client = QdrantClient(url=url, api_key=api_key)
+                if url == ":memory:":
+                    self.client = QdrantClient(location=":memory:", api_key=api_key)
+                else:
+                    self.client = QdrantClient(url=url, api_key=api_key)
             except ImportError:
                 raise ImportError("Qdrant client not installed. Run `pip install quira[qdrant]`")
 

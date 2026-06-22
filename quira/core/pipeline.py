@@ -42,7 +42,7 @@ class quiraPipeline:
             self.vector_store = vector_store
         elif isinstance(vector_store, str):
             v_type = vector_store.lower()
-            if v_type == "qdrant":
+            if v_type in ["qdrant", "memory"]:
                 self.vector_store = QdrantStore()
             elif v_type == "pinecone":
                 self.vector_store = PineconeStore()

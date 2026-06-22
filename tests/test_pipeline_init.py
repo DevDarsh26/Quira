@@ -3,7 +3,8 @@ from quira import quiraPipeline, UserSession
 from quira.providers.llm.openai import OpenAIProvider
 from quira.providers.vector.qdrant import QdrantStore
 
-def test_pipeline_init_pal():
+def test_pipeline_init_pal(monkeypatch):
+    monkeypatch.setenv("OPENAI_API_KEY", "dummy_key")
     pipeline = quiraPipeline(
         vector_store="qdrant",
         cache="memory",

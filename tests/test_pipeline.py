@@ -21,6 +21,10 @@ def mock_pipeline():
     class MockLLM(LLMProvider):
         async def complete(self, *args, **kwargs): return "Pipeline generated answer"
         def embed(self, *args, **kwargs): return [0.1, 0.2]
+        async def stream(self, *args, **kwargs):
+            yield "Pipeline "
+            yield "generated "
+            yield "answer"
     
     # Initialize pipeline with mocks
     pipeline = quiraPipeline(

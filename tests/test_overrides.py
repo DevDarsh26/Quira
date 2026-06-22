@@ -19,5 +19,5 @@ def test_pipeline_overrides():
     assert pipeline.tetris.density_func == custom_density_func
     
     # Check that density func evaluates code correctly
-    score = pipeline.tetris.score_chunk({"text": "def my_func(): pass", "embedding": np.array([0.1, 0.2])}, np.array([0.1, 0.2]), [])
+    score = pipeline.tetris.score_chunk({"text": "def my_func(): pass", "embedding": np.array([0.1, 0.2])}, np.array([0.1, 0.2]), 0.0)
     assert score.density == 1.0

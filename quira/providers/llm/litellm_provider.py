@@ -1,5 +1,5 @@
 import asyncio
-from typing import Any, AsyncGenerator, Optional
+from typing import Any, AsyncGenerator, Optional, List
 from quira.providers.base import LLMProvider
 
 class LiteLLMProvider(LLMProvider):
@@ -10,14 +10,17 @@ class LiteLLMProvider(LLMProvider):
         """
         self.default_model = default_model
         if embed_func:
-            self.embed = embed_func
+            self._embed_func = embed_func
         else:
             try:
                 from fastembed import TextEmbedding
                 model = TextEmbedding("sentence-transformers/all-MiniLM-L6-v2")
-                self.embed = lambda text: list(model.embed([text]))[0]
+                self._embed_func = lambda text: list(model.embed([text]))[0]
             except ImportError:
                 raise ImportError("FastEmbed is not installed. Run `pip install quira[local-embed]` or provide a custom embed_func.")
+
+    def embed(self, text: str) -> List[float]:
+        return self._embed_func(text)
 
         try:
             import litellm
