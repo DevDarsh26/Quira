@@ -33,9 +33,12 @@ class DifferentialRetriever:
         if embed_func:
             self.embed_func = embed_func
         else:
-            from fastembed import TextEmbedding
-            model = TextEmbedding("sentence-transformers/all-MiniLM-L6-v2")
-            self.embed_func = lambda text: list(model.embed([text]))[0]
+            try:
+                from fastembed import TextEmbedding
+                model = TextEmbedding("sentence-transformers/all-MiniLM-L6-v2")
+                self.embed_func = lambda text: list(model.embed([text]))[0]
+            except ImportError:
+                raise ImportError("FastEmbed is not installed. Run `pip install quira[local-embed]` or provide a custom embed_func.")
         
         # Conversation state
         self.turns: List[Dict[str, Any]] = []  # [{"query": str, "embedding": np.ndarray, "timestamp": float}]
@@ -116,8 +119,8 @@ class DifferentialRetriever:
             )
             candidates = [{"id": hit["id"], "text": hit["payload"].get("text", ""), "embedding": np.array(hit["payload"].get("embedding", current_emb)), "hit_count": 0} for hit in hits]
         except Exception as e:
-            logger.warning(f"Search failed, using mocks: {e}")
-            candidates = [{"id": f"mock_{i}", "text": f"mock {i}", "embedding": current_emb, "hit_count": 0} for i in range(15)]
+            logger.warning(f"Search failed, returning empty context: {e}")
+            candidates = []
             
         # Differential Retrieval Logic
         new_chunks = []

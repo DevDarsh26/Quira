@@ -70,6 +70,26 @@ class FallbackLLMProvider(LLMProvider):
             else:
                 raise LLMProviderError("Primary LLM provider failed and no fallback available.", {"error": str(e)})
 
+    async def _stream_primary(self, prompt: str, system_prompt: Optional[str] = None, model: Optional[str] = None):
+        async for chunk in self.primary.stream(prompt, system_prompt, model):
+            yield chunk
+
+    async def stream(self, prompt: str, system_prompt: Optional[str] = None, model: Optional[str] = None):
+        try:
+            async for chunk in self._stream_primary(prompt, system_prompt, model):
+                yield chunk
+        except Exception as e:
+            if self.fallback:
+                logger.warning(f"Primary LLM provider failed during streaming: {e}. Switching to fallback.")
+                try:
+                    async for chunk in self.fallback.stream(prompt, system_prompt, model):
+                        yield chunk
+                except Exception as fallback_e:
+                    logger.error(f"Fallback LLM provider also failed during streaming: {fallback_e}")
+                    raise LLMProviderError("Both primary and fallback LLM providers failed during streaming.", {"primary_error": str(e), "fallback_error": str(fallback_e)})
+            else:
+                raise LLMProviderError("Primary LLM provider failed during streaming and no fallback available.", {"error": str(e)})
+
     @with_retry_sync(max_attempts=3, base_delay=0.5)
     def _embed_primary(self, text: str) -> List[float]:
         return self.primary.embed(text)

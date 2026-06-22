@@ -1,7 +1,7 @@
 import time
 import math
 import logging
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Callable
 import numpy as np
 import tiktoken
 
@@ -39,9 +39,10 @@ class ContextTetris:
     Compresses based on score using an LLM.
     U-shape ordering for optimal LLM attention.
     """
-    def __init__(self, llm_provider: LLMProvider, spacy_model: Any = None):
+    def __init__(self, llm_provider: LLMProvider, spacy_model: Any = None, density_func: Optional[Callable[[str], float]] = None):
         self.llm = llm_provider
         self.nlp = spacy_model
+        self.density_func = density_func
         
         try:
             self.tokenizer = tiktoken.get_encoding("cl100k_base")
@@ -68,7 +69,7 @@ class ContextTetris:
             return 0.0
         return float(np.dot(emb1, emb2) / norm)
 
-    def score_chunk(self, chunk: Dict[str, Any], query_embedding: np.ndarray, selected_embeddings: List[np.ndarray]) -> ChunkScore:
+    def score_chunk(self, chunk: Dict[str, Any], query_embedding: np.ndarray, max_sim_cache: float) -> ChunkScore:
         # Relevance
         chunk_emb = np.array(chunk.get("embedding", []))
         if len(chunk_emb) == 0:
@@ -82,16 +83,20 @@ class ContextTetris:
         recency = math.exp(-math.log(2) * max(0, days_ago) / 180)
         
         # Uniqueness
-        uniqueness = 1.0
-        if selected_embeddings and len(chunk_emb) > 0:
-            max_sim = max(self._cosine_similarity(chunk_emb, se) for se in selected_embeddings)
-            uniqueness = max(0.0, 1.0 - max_sim)
+        uniqueness = max(0.0, 1.0 - max_sim_cache)
             
         # Density
         text = chunk.get("text", "")
         tokens = self._count_tokens(text)
-        if tokens == 0 or not self.nlp:
+        if tokens == 0:
             density = 0.0
+        elif self.density_func:
+            density = self.density_func(text)
+        elif not self.nlp:
+            import re
+            # Fallback heuristic: count capitalized words, numbers, and basic entities
+            ent_count = len(re.findall(r'\b[A-Z][a-z]+\b|\b\d+\b', text))
+            density = min(1.0, ent_count / max(1, (tokens / 100)))
         else:
             doc = self.nlp(text)
             # count entities and numbers
@@ -111,6 +116,11 @@ class ContextTetris:
                 if ent.label_ in {"PERSON", "ORG", "GPE", "LOC", "DATE", "TIME", "PERCENT", "MONEY", "QUANTITY", "CARDINAL"}:
                     preserved.append(ent.text)
             preserved_str = ", ".join(set(preserved))
+        else:
+            import re
+            preserved = re.findall(r'\b[A-Z][a-z]+\b|\b\d+\b', text)
+            # Keep only a sample of them to avoid huge prompt if no spacy
+            preserved_str = ", ".join(set(preserved[:15]))
         
         if level == "light":
             prompt = f"Remove filler sentences but keep all facts, numbers, and entities. MUST PRESERVE: {preserved_str}\n\nText: {text}"
@@ -133,7 +143,8 @@ class ContextTetris:
         new_chunk["text"] = compressed_text
         return new_chunk
 
-    async def pack(self, chunks: List[Dict[str, Any]], query_embedding: np.ndarray, token_budget: int = 120000) -> PackedContext:
+    async def pack(self, chunks: List[Dict[str, Any]], query_embedding: np.ndarray, token_budget: int = 120000, skip_compression: bool = False) -> PackedContext:
+        import asyncio
         logger.info(f"Scoring {len(chunks)} chunks for query...")
         self._stats["initial_chunks"] = len(chunks)
         
@@ -144,48 +155,66 @@ class ContextTetris:
         selected_embeddings = []
         
         pool = chunks.copy()
+        max_sims = [0.0] * len(pool)
         
         while pool and current_tokens < budget:
             # Score all chunks in pool
             best_idx = -1
             best_score = -1.0
-            best_chunk_score = None
             
             for i, chunk in enumerate(pool):
-                score = self.score_chunk(chunk, query_embedding, selected_embeddings)
+                score = self.score_chunk(chunk, query_embedding, max_sims[i])
                 if score.final_score > best_score:
                     best_score = score.final_score
                     best_idx = i
-                    best_chunk_score = score
                     
             best_chunk = pool.pop(best_idx)
             best_chunk["tetris_score"] = best_score
+            best_sim = max_sims.pop(best_idx)
             
-            # Determine compression level
-            if best_score > 0.85:
-                processed_chunk = best_chunk
-            else:
-                level = "light" if best_score >= 0.65 else "heavy"
-                processed_chunk = await self.compress_chunk(best_chunk, level)
-                
-            chunk_tokens = self._count_tokens(processed_chunk.get("text", ""))
+            chunk_tokens = self._count_tokens(best_chunk.get("text", ""))
             
             if current_tokens + chunk_tokens <= budget:
-                selected_chunks.append(processed_chunk)
-                selected_embeddings.append(np.array(processed_chunk.get("embedding", [])))
+                selected_chunks.append(best_chunk)
+                new_emb = np.array(best_chunk.get("embedding", []))
+                selected_embeddings.append(new_emb)
                 current_tokens += chunk_tokens
+                
+                # Update uniqueness caches for O(N^2) complexity instead of O(N^3)
+                if len(new_emb) > 0:
+                    for i, pool_chunk in enumerate(pool):
+                        pool_emb = np.array(pool_chunk.get("embedding", []))
+                        if len(pool_emb) > 0:
+                            sim = self._cosine_similarity(pool_emb, new_emb)
+                            if sim > max_sims[i]:
+                                max_sims[i] = sim
             else:
                 self._stats["rejected_chunks"] += 1
 
-        self._stats["selected_chunks"] = len(selected_chunks)
+        # Concurrent compression execution
+        compression_tasks = []
+        for chunk in selected_chunks:
+            score = chunk["tetris_score"]
+            if skip_compression or score > 0.85:
+                async def identity(c): return c
+                compression_tasks.append(identity(chunk))
+            else:
+                level = "light" if score >= 0.65 else "heavy"
+                compression_tasks.append(self.compress_chunk(chunk, level))
+                
+        final_chunks = await asyncio.gather(*compression_tasks)
+        
+        actual_tokens = sum(self._count_tokens(c.get("text", "")) for c in final_chunks)
+        
+        self._stats["selected_chunks"] = len(final_chunks)
         self._stats["rejected_chunks"] += len(pool)
-        self._stats["utilization_pct"] = (current_tokens / budget) * 100 if budget > 0 else 0
+        self._stats["utilization_pct"] = (actual_tokens / budget) * 100 if budget > 0 else 0
         
         logger.info(f"Selected {self._stats['selected_chunks']} chunks (rejected {self._stats['rejected_chunks']} as redundant or low score)")
         logger.info(f"Compressed {self._stats['compressed_chunks']} chunks (saved {self._stats['tokens_saved']} tokens)")
         logger.info(f"Context utilization: {int(self._stats['utilization_pct'])}% of budget used")
         
-        ordered = self._u_shape_order(selected_chunks)
+        ordered = self._u_shape_order(final_chunks)
         
         if ordered:
             preview = ordered[0].get("text", "")[:50].replace("\n", " ")

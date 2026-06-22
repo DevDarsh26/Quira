@@ -3,8 +3,21 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Terminal, Zap, Layers, Puzzle, GitPullRequest, ArrowRight } from "lucide-react";
 import Link from "next/link";
+import fs from "fs";
+import path from "path";
 
-export default function Home() {
+export default async function Home() {
+  // Read version dynamically from pyproject.toml
+  let version = "0.x.x";
+  try {
+    const tomlPath = path.join(process.cwd(), "../pyproject.toml");
+    const tomlContent = fs.readFileSync(tomlPath, "utf8");
+    const match = tomlContent.match(/version\s*=\s*"([^"]+)"/);
+    if (match && match[1]) version = match[1];
+  } catch (_) {
+    console.error("Could not read pyproject.toml version");
+  }
+
   return (
     <div className="flex flex-col items-center justify-start w-full">
       
@@ -14,7 +27,7 @@ export default function Home() {
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-primary/20 blur-[120px] rounded-full pointer-events-none -z-10" />
         
         <Badge variant="outline" className="px-4 py-1.5 text-sm rounded-full border-primary/30 bg-primary/5 text-primary">
-          v0.2.0 is now live on PyPI
+          v{version} is now live on PyPI
         </Badge>
         
         <h1 className="text-5xl md:text-7xl font-extrabold tracking-tighter max-w-4xl bg-clip-text text-transparent bg-linear-to-br from-foreground via-foreground/90 to-muted-foreground">
@@ -131,7 +144,7 @@ export default function Home() {
             </p>
             <div className="p-4 rounded-xl bg-muted font-mono text-sm border border-border/50 flex items-center gap-3">
               <Terminal className="w-4 h-4 text-muted-foreground" />
-              <span className="text-foreground">pip install quira[all]</span>
+              <span className="text-foreground">pip install &quot;quira[litellm,qdrant]&quot;</span>
             </div>
             <p className="text-sm text-muted-foreground">
               Supports LangChain and LlamaIndex natively via `QuiraRetriever` and `QuiraQueryEngine`.
@@ -147,19 +160,21 @@ export default function Home() {
                 <span className="ml-2 text-xs font-medium text-muted-foreground font-mono">main.py</span>
               </div>
               <div className="p-4 sm:p-6 font-mono text-xs sm:text-sm text-zinc-300 leading-relaxed overflow-x-auto"><pre><code><span className="text-zinc-500"># 1. Install via pip</span>{"\n"}
-<span className="text-zinc-300">pip install </span><span className="text-green-400">&quot;quira[all]&quot;</span>{"\n\n"} quiraPipeline, UserSession{"\n\n"}
-<span className="text-zinc-500"># Drop-in provider abstraction</span>{"\n"}
+<span className="text-zinc-300">pip install </span><span className="text-green-400">&quot;quira[litellm,qdrant]&quot;</span>{"\n\n"}
+<span className="text-zinc-500"># 2. Setup your pipeline</span>{"\n"}
+<span className="text-zinc-300">from quira import quiraPipeline, UserSession</span>{"\n"}
+<span className="text-zinc-300">from quira.integrations import QuiraRetriever</span>{"\n\n"}
 pipeline = quiraPipeline({"\n"}
     vector_store=<span className="text-green-400">&quot;qdrant&quot;</span>,{"\n"}
     cache=<span className="text-green-400">&quot;redis&quot;</span>,{"\n"}
     llm=<span className="text-green-400">&quot;openai/gpt-4o&quot;</span>{"\n"}
 ){"\n\n"}
-
 <span className="text-zinc-500"># 100% LangChain compatible</span>{"\n"}
 retriever = QuiraRetriever(pipeline=pipeline){"\n"}
 docs = retriever.invoke(<span className="text-green-400">&quot;What is Context Tetris?&quot;</span>){"\n\n"}
 <span className="text-zinc-500"># 3. Process a query (handles Tetris + Generation internally)</span>{"\n"}
 session = UserSession(<span className="text-green-400">&quot;user_123&quot;</span>){"\n"}
+<span className="text-zinc-500"># Use stream_sync for real-time output, or sync for a single block</span>{"\n"}
 answer = pipeline.process_submission_sync(session, <span className="text-green-400">&quot;What is quantum mechanics?&quot;</span>){"\n\n"}
 <span className="text-blue-400">print</span>(answer)</code></pre>
               </div>

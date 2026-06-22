@@ -5,6 +5,12 @@ from typing import Callable, Any
 
 logger = logging.getLogger("quira.retry")
 
+def is_permanent_error(e: Exception) -> bool:
+    error_str = str(e).lower()
+    if any(code in error_str for code in ["401", "403", "404", "unauthorized", "forbidden", "not found"]):
+        return True
+    return False
+
 def with_retry(max_attempts: int = 3, base_delay: float = 0.5):
     """
     Exponential backoff retry decorator for async functions.
@@ -17,7 +23,9 @@ def with_retry(max_attempts: int = 3, base_delay: float = 0.5):
                 try:
                     return await func(*args, **kwargs)
                 except Exception as e:
-                    if attempt == max_attempts:
+                    if attempt == max_attempts or is_permanent_error(e):
+                        if is_permanent_error(e):
+                            logger.error(f"Permanent error detected for {func.__name__}: {e}. Failing fast.")
                         raise e
                     delay = base_delay * (2 ** (attempt - 1))
                     logger.warning(f"Attempt {attempt} failed for {func.__name__} with error: {e}. Retrying in {delay}s...")
@@ -39,7 +47,9 @@ def with_retry_sync(max_attempts: int = 3, base_delay: float = 0.5):
                 try:
                     return func(*args, **kwargs)
                 except Exception as e:
-                    if attempt == max_attempts:
+                    if attempt == max_attempts or is_permanent_error(e):
+                        if is_permanent_error(e):
+                            logger.error(f"Permanent error detected for {func.__name__}: {e}. Failing fast.")
                         raise e
                     delay = base_delay * (2 ** (attempt - 1))
                     logger.warning(f"Attempt {attempt} failed for {func.__name__} with error: {e}. Retrying in {delay}s...")

@@ -21,9 +21,12 @@ class AnthropicProvider(LLMProvider):
         if embed_func:
             self._embed_func = embed_func
         else:
-            from fastembed import TextEmbedding
-            model = TextEmbedding("sentence-transformers/all-MiniLM-L6-v2")
-            self._embed_func = lambda text: list(model.embed([text]))[0]
+            try:
+                from fastembed import TextEmbedding
+                model = TextEmbedding("sentence-transformers/all-MiniLM-L6-v2")
+                self._embed_func = lambda text: list(model.embed([text]))[0]
+            except ImportError:
+                raise ImportError("FastEmbed is not installed. Run `pip install quira[local-embed]` or provide a custom embed_func.")
 
     async def complete(self, prompt: str, system_prompt: Optional[str] = None, model: Optional[str] = None) -> str:
         messages = [{"role": "user", "content": prompt}]
@@ -45,6 +48,44 @@ class AnthropicProvider(LLMProvider):
             )
             
         return response.content[0].text
+
+    async def stream(self, prompt: str, system_prompt: Optional[str] = None, model: Optional[str] = None):
+        messages = [{"role": "user", "content": prompt}]
+        kwargs = {
+            "model": model or self.default_model,
+            "max_tokens": 4096,
+            "messages": messages,
+        }
+        if system_prompt:
+            kwargs["system"] = system_prompt
+            
+        if asyncio.iscoroutinefunction(self.client.messages.create):
+            async with self.client.messages.stream(**kwargs) as stream:
+                async for text in stream.text_stream:
+                    yield text
+        else:
+            import threading
+            q = asyncio.Queue()
+            loop = asyncio.get_event_loop()
+            
+            def producer():
+                try:
+                    with self.client.messages.stream(**kwargs) as stream:
+                        for text in stream.text_stream:
+                            loop.call_soon_threadsafe(q.put_nowait, text)
+                except Exception as e:
+                    loop.call_soon_threadsafe(q.put_nowait, e)
+                finally:
+                    loop.call_soon_threadsafe(q.put_nowait, None)
+
+            threading.Thread(target=producer, daemon=True).start()
+            while True:
+                item = await q.get()
+                if item is None:
+                    break
+                if isinstance(item, Exception):
+                    raise item
+                yield item
 
     def embed(self, text: str) -> List[float]:
         emb = self._embed_func(text)

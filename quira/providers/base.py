@@ -47,6 +47,11 @@ class LLMProvider(ABC):
         pass
         
     @abstractmethod
+    async def stream(self, prompt: str, system_prompt: Optional[str] = None, model: Optional[str] = None):
+        """Generate a text completion stream given a prompt, yielding strings incrementally."""
+        pass
+        
+    @abstractmethod
     def embed(self, text: str) -> List[float]:
         """
         Generate an embedding vector for the given text.
