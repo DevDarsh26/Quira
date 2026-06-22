@@ -13,7 +13,7 @@ class LiteLLMProvider(LLMProvider):
             self._embed_func = embed_func
         else:
             try:
-                from fastembed import TextEmbedding
+                from fastembed import TextEmbedding # type: ignore
                 model = TextEmbedding("sentence-transformers/all-MiniLM-L6-v2")
                 self._embed_func = lambda text: list(model.embed([text]))[0]
             except ImportError:
@@ -23,7 +23,7 @@ class LiteLLMProvider(LLMProvider):
         return self._embed_func(text)
 
         try:
-            import litellm
+            import litellm # type: ignore
             self.litellm = litellm
         except ImportError:
             raise ImportError("litellm is not installed. Run `pip install litellm`")
