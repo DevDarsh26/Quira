@@ -23,7 +23,6 @@ dependencies = [
     "numpy>=1.24.0",
     "tiktoken>=0.5.0",
     "nest-asyncio>=1.5.0",
-    "fastembed>=0.2.0",
 ]
 
 [project.urls]
@@ -46,6 +45,9 @@ dev = [
 pdf = [
     "pymupdf>=1.23.0"
 ]
+local-embed = [
+    "fastembed>=0.2.0"
+]
 spacy = [
     "spacy>=3.7.0"
 ]
@@ -61,6 +63,9 @@ qdrant = [
 weaviate = [
     "weaviate-client>=4.4.0"
 ]
+supabase = [
+    "supabase>=2.3.0"
+]
 redis = [
     "redis>=5.0.0"
 ]
@@ -74,12 +79,15 @@ groq = [
     "groq>=0.4.0"
 ]
 ollama = [
-    "ollama>=0.1.0"
+    "ollama>=0.2.0"
+]
+litellm = [
+    "litellm>=1.40.0"
 ]
 integrations = [
     "langchain-core>=0.1.0",
     "llama-index-core>=0.10.0"
 ]
 all = [
-    "quira[pdf,spacy,pinecone,chroma,qdrant,weaviate,redis,openai,anthropic,groq,ollama,integrations]"
+    "quira[pdf,local-embed,spacy,pinecone,chroma,qdrant,weaviate,supabase,redis,openai,anthropic,groq,ollama,litellm,integrations]"
 ]

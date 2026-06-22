@@ -44,6 +44,51 @@ class OpenAIProvider(LLMProvider):
             
         return response.choices[0].message.content
 
+    async def stream(self, prompt: str, system_prompt: Optional[str] = None, model: Optional[str] = None):
+        messages = []
+        if system_prompt:
+            messages.append({"role": "system", "content": system_prompt})
+        messages.append({"role": "user", "content": prompt})
+        
+        if asyncio.iscoroutinefunction(self.client.chat.completions.create):
+            response = await self.client.chat.completions.create(
+                model=model or self.default_model,
+                messages=messages,
+                stream=True
+            )
+            async for chunk in response:
+                if chunk.choices and chunk.choices[0].delta.content:
+                    yield chunk.choices[0].delta.content
+        else:
+            # Fallback for sync client
+            import threading
+            q = asyncio.Queue()
+            loop = asyncio.get_event_loop()
+
+            def producer():
+                try:
+                    response = self.client.chat.completions.create(
+                        model=model or self.default_model,
+                        messages=messages,
+                        stream=True
+                    )
+                    for chunk in response:
+                        if chunk.choices and chunk.choices[0].delta.content:
+                            loop.call_soon_threadsafe(q.put_nowait, chunk.choices[0].delta.content)
+                except Exception as e:
+                    loop.call_soon_threadsafe(q.put_nowait, e)
+                finally:
+                    loop.call_soon_threadsafe(q.put_nowait, None)
+
+            threading.Thread(target=producer, daemon=True).start()
+            while True:
+                item = await q.get()
+                if item is None:
+                    break
+                if isinstance(item, Exception):
+                    raise item
+                yield item
+
     def embed(self, text: str) -> List[float]:
         if self._custom_embed_func:
             emb = self._custom_embed_func(text)

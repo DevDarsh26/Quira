@@ -10,6 +10,8 @@ except ImportError:
     fitz = None
 
 import numpy as np
+import os
+import csv
 
 logger = logging.getLogger("quira.ingestion")
 logger.setLevel(logging.INFO)
@@ -66,6 +68,34 @@ class DocumentIngestor:
         except Exception as e:
             logger.error(f"Failed to parse PDF {file_path}: {e}")
             raise
+
+    def extract_docx_text(self, file_path: str) -> str:
+        try:
+            import docx  # type: ignore
+        except ImportError:
+            raise ImportError("python-docx is not installed. Run `pip install python-docx`")
+        
+        doc = docx.Document(file_path)
+        return "\n".join([para.text for para in doc.paragraphs])
+
+    def extract_html_text(self, file_path: str) -> str:
+        try:
+            from bs4 import BeautifulSoup  # type: ignore
+        except ImportError:
+            raise ImportError("beautifulsoup4 is not installed. Run `pip install beautifulsoup4`")
+        
+        with open(file_path, "r", encoding="utf-8") as f:
+            soup = BeautifulSoup(f, "html.parser")
+            return soup.get_text(separator="\n")
+
+    def extract_csv_text(self, file_path: str) -> str:
+        with open(file_path, "r", encoding="utf-8") as f:
+            reader = csv.reader(f)
+            return "\n".join([", ".join(row) for row in reader])
+
+    def extract_markdown_text(self, file_path: str) -> str:
+        with open(file_path, "r", encoding="utf-8") as f:
+            return f.read()
 
     async def ingest_text(self, user_id: str, text: str, chunk_size: int = 1000, overlap: int = 200) -> int:
         """
@@ -140,4 +170,26 @@ class DocumentIngestor:
         """
         logger.info(f"User {user_id}: Extracting text from PDF '{file_path}'...")
         text = self.extract_pdf_text(file_path)
+        return await self.ingest_text(user_id, text, chunk_size, overlap)
+
+    async def ingest_file(self, user_id: str, file_path: str, chunk_size: int = 1000, overlap: int = 200) -> int:
+        """
+        Auto-detects file extension and routes it to the correct parser.
+        """
+        ext = os.path.splitext(file_path)[1].lower()
+        logger.info(f"User {user_id}: Extracting text from '{file_path}'...")
+        
+        if ext == ".pdf":
+            text = self.extract_pdf_text(file_path)
+        elif ext == ".docx":
+            text = self.extract_docx_text(file_path)
+        elif ext in [".html", ".htm"]:
+            text = self.extract_html_text(file_path)
+        elif ext == ".csv":
+            text = self.extract_csv_text(file_path)
+        elif ext in [".md", ".markdown", ".txt"]:
+            text = self.extract_markdown_text(file_path)
+        else:
+            raise ValueError(f"Unsupported file extension: {ext}")
+            
         return await self.ingest_text(user_id, text, chunk_size, overlap)

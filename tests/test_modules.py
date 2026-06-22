@@ -55,7 +55,7 @@ async def test_context_tetris_scoring(mock_llm):
         "embedding": [1.0, 0.0] # perfect relevance
     }
     
-    score = tetris.score_chunk(chunk, query_emb, [])
+    score = tetris.score_chunk(chunk, query_emb, 0.0)
     assert score.relevance == 1.0 # Cosine sim should be 1.0
     assert score.uniqueness == 1.0 # No previous chunks
     # Without spacy, density might be 0, but final score should still be high due to relevance and uniqueness

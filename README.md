@@ -57,58 +57,64 @@ graph TD
 
 ---
 
-## 📦 Quickstart
+## 📦 Quickstart & Environment Setup
 
-### 1. Install via pip
+### 1. Installation
+
+Quira offers a modular installation depending on which providers you want to use.
+
 ```bash
-pip install quira
+# Install everything (includes OpenAI, Anthropic, Qdrant, Pinecone, Redis, etc.)
+pip install "quira[all]"
+
+# OR install a lightweight minimal setup just for local LLMs and Qdrant
+pip install "quira[ollama,qdrant]"
 ```
 
-### 2. Basic Setup
-Quira does not hardcode API keys. **You bring your own clients**, meaning you have full control over your usage and billing.
+### 2. Environment Variables
+
+Quira does not hardcode API keys. Make sure your environment is configured for the providers you use:
+
+```env
+OPENAI_API_KEY=sk-proj-...
+ANTHROPIC_API_KEY=sk-ant-...
+GROQ_API_KEY=gsk_...
+QDRANT_URL=http://localhost:6333
+REDIS_URL=redis://localhost:6379
+```
+
+### 3. End-to-End Working Example
+
+Here is a complete, runnable script from ingestion to streaming response using the **Provider Abstraction Layer**.
 
 ```python
 import asyncio
 from quira import quiraPipeline, UserSession
-from qdrant_client import QdrantClient
-from groq import Groq
-import spacy
-from fastembed import TextEmbedding
 
 async def main():
-    # 1. Initialize your clients (Bring Your Own Keys)
-    qdrant = QdrantClient(":memory:") # Or your cloud Qdrant URL
-    redis_mock = None # Pass a real Upstash Redis client in production
-    groq = Groq(api_key="your_groq_api_key") 
-    spacy_model = spacy.load("en_core_web_sm")
-    
-    embed_model = TextEmbedding("sentence-transformers/all-MiniLM-L6-v2")
-    embed_func = lambda text: list(embed_model.embed([text]))[0]
-
-    # 2. Initialize Quira Pipeline
+    # 1. Initialize Quira Pipeline using simple string configuration
     pipeline = quiraPipeline(
-        qdrant_client=qdrant,
-        redis_client=redis_mock,
-        groq_client=groq,
-        embed_func=embed_func,
-        spacy_model=spacy_model
+        vector_store="qdrant",
+        cache="redis",
+        llm="openai/gpt-4o"
     )
 
-    # 3. Create a session for a specific user
+    # 2. Create a session for a specific user
     session = UserSession(user_id="user_123")
 
-    # 4. Ingest some documents!
+    # 3. Ingest documents (Auto-detects format: pdf, html, csv, md, docx)
     print("Ingesting document...")
-    await pipeline.ingestor.ingest_text("user_123", "Our return policy allows returns within 30 days of purchase.")
+    await pipeline.ingest_file("sample_doc.md", user_id="user_123")
 
-    # 5. 🏎️ Speculative fetch (triggers while user is typing in the UI)
-    await pipeline.handle_typing_event(session, "What is the re")
+    # 4. 🏎️ Speculative fetch (Requires real-time UI/WebSocket feeding keystrokes)
+    # This prepares the context in Redis while the user is typing
+    await pipeline.handle_typing_event(session, "What is the ")
 
-    # 6. 🎯 Submit (Context is already warm from the speculative fetch!)
-    answer = await pipeline.process_submission(
-        session, "What is the return policy?"
-    )
-    print(answer)
+    # 5. 🎯 Submit & Stream Response
+    print("\nAnswer: ", end="", flush=True)
+    async for chunk in pipeline.process_submission_stream(session, "What is the main topic?"):
+        print(chunk, end="", flush=True)
+    print()
 
 if __name__ == "__main__":
     asyncio.run(main())
@@ -121,7 +127,8 @@ if __name__ == "__main__":
 Quira is built on 4 beautifully orchestrated modules:
 
 ### 🏎️ Module 1: Speculative Retrieval
-Instead of waiting for the user to hit "Enter", Quira listens to keystrokes. Using adaptive debouncing (250ms–600ms based on typing speed), it fires Qdrant searches in the background. By the time the user hits Enter, the vector search is already cached in Redis.
+Instead of waiting for the user to hit "Enter", Quira listens to keystrokes. Using adaptive debouncing, it fires searches in the background. By the time the user hits Enter, the vector search is already cached in Redis.
+> **Note:** Speculative Retrieval **requires** a frontend WebSocket connection feeding typing events to `handle_typing_event`. Without it, Quira gracefully falls back to standard retrieval on submit.
 
 ### 🧩 Module 2: Context Tetris
 Not all retrieved context is equal. Quira scores every chunk on **4 dimensions**:
@@ -130,22 +137,22 @@ Not all retrieved context is equal. Quira scores every chunk on **4 dimensions**
 3. **Uniqueness** (Penalizes duplicate information)
 4. **Density** (Entity-to-token ratio)
 
-It then uses the blazing-fast **Groq LLM** to compress filler text out of the chunks, and orders them in a **U-shape** (best chunks at the very start and end) to prevent the LLM from "losing" facts in the middle of the prompt.
+It then uses a fast LLM to compress filler text out of the chunks, and orders them in a **U-shape** (best chunks at the very start and end) to prevent the LLM from "losing" facts in the middle of the prompt.
 
 ### 🔄 Module 3: Differential Retrieval
 In a normal RAG chat, asking a follow-up question triggers a completely new vector search. Quira maintains a **Context Pool**. It measures the cosine similarity between the current and previous query. If the topic hasn't changed drastically, Quira only fetches **Delta Chunks** (new information) and merges it, saving massive amounts of redundant processing.
 
 ### 📄 Module 4: Document Ingestion
-Built-in PyMuPDF parsing with overlapping text chunking (default 1000 chars / 200 overlap) to prevent sentence fragmentation. Automatically generates embeddings and upserts them directly into Qdrant.
+Built-in multi-format parsing (PDF, DOCX, HTML, CSV, Markdown) with overlapping text chunking (default 1000 chars / 200 overlap) to prevent sentence fragmentation. Automatically generates embeddings and upserts them directly into your Vector Store.
 
 ---
 
-## 🛡️ Resilience & Fallbacks
+## 🛡️ Resilience & Debugging
 
 Quira is built for production reliability. It features a robust **Exception Hierarchy** (`QuiraError`) and transparent **Retry & Fallback Logic**.
 
-- **Exponential Backoff:** All LLM and Vector Store network calls automatically retry up to 3 times with exponential backoff.
-- **Provider Fallbacks:** You can provide a secondary `fallback_llm` or `fallback_vector_store`. If your primary provider goes down, Quira will seamlessly failover to the backup provider without dropping the user's request.
+### Provider Fallbacks
+You can provide a secondary `fallback_llm` or `fallback_vector_store`. If your primary provider goes down, Quira will seamlessly failover to the backup provider without dropping the user's request.
 
 ```python
 pipeline = quiraPipeline(
@@ -156,15 +163,25 @@ pipeline = quiraPipeline(
 )
 ```
 
+### Error Handling & Debugging
+If you encounter issues, Quira uses standard Python logging. Enable debug logs to see exact scoring metrics, fallback triggers, and compression ratios:
+
+```python
+import logging
+logging.getLogger("quira").setLevel(logging.DEBUG)
+```
+
+You can catch specific Quira exceptions such as `VectorStoreUnavailableError` or `LLMProviderError` from `quira.exceptions` for graceful UI degradation.
+
 ---
 
 ## 💰 Why Quira Saves You Money
 
-You might wonder: *"Doesn't using Groq for Context Tetris cost extra money?"*
+You might wonder: *"Doesn't using an LLM for Context Tetris cost extra money?"*
 
 **No, it actually saves you up to 40% on your bill.** Here's why:
-1. **Groq is Hyper-Cheap:** The `llama-3.1-8b-instant` model used to compress context costs fractions of a penny.
-2. **Your Main LLM is Expensive:** You are likely sending your final prompt to a heavy model like GPT-4o or Claude 3.5 Sonnet. By using cheap Groq tokens to *compress* the context, you send significantly fewer tokens to the expensive main LLM.
+1. **Compression is Cheap:** The models used to compress context cost fractions of a penny.
+2. **Your Main LLM is Expensive:** You are likely sending your final prompt to a heavy model like GPT-4o or Claude 3.5 Sonnet. By using cheap tokens to *compress* the context, you send significantly fewer tokens to the expensive main LLM.
 3. **Differential Caching:** You stop re-fetching and re-sending identical chunks of text on every single conversational turn.
 
 ---
@@ -178,31 +195,24 @@ You might wonder: *"Doesn't using Groq for Context Tetris cost extra money?"*
 | **Token Cost** | Baseline | **-40%** | 💰 **40% cheaper** |
 | **Redundant Fetches** | Every turn | **Delta only** | ♻️ **~70% fewer** |
 
+> *To verify these metrics yourself, run the test harness in the `benchmarks/` directory.*
+
 ---
 
 ## 📚 API Reference
 
-### `quiraPipeline(qdrant, redis, groq, embed_func, spacy_model)`
-The main pipeline class. Accepts your own client instances.
+### `quiraPipeline(vector_store, cache, llm, ...)`
+The main pipeline class. Accepts your own client instances or string identifiers for the Provider Abstraction Layer.
 
 | Method | Description |
 |--------|-------------|
 | `handle_typing_event(session, keystrokes)` | Trigger speculative retrieval on keystrokes |
 | `process_submission(session, query)` | Full retrieval + compression pipeline |
-| `ingestor.ingest_pdf(user_id, path)` | Parse, chunk, embed, and store a PDF |
-| `ingestor.ingest_text(user_id, text)` | Chunk, embed, and store raw text |
+| `process_submission_stream(session, query)`| Full pipeline yielding a real-time streaming string |
+| `ingest_file(path, user_id)` | Auto-detect, parse, chunk, embed, and store a file |
 
-### `UserSession(user_id, websocket=None)`
+### `UserSession(user_id)`
 Tracks per-user conversation state, context pools, and turn history. Keeps different users' data strictly isolated.
-
----
-
-## 🔒 Security
-
-Quira is regularly audited:
-- ✅ **0 vulnerabilities** across all severity levels via Bandit
-- ✅ SHA-256 hashing for all cache keys (no weak hashes)
-- ✅ **Bring Your Own Keys** architecture — absolutely zero API keys or credentials are included or required by the library itself. You retain 100% control over your API secrets.
 
 ---
 

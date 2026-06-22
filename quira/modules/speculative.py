@@ -30,9 +30,12 @@ class SpeculativeRetriever:
         if embed_func:
             self.embed_func = embed_func
         else:
-            from fastembed import TextEmbedding
-            model = TextEmbedding("sentence-transformers/all-MiniLM-L6-v2")
-            self.embed_func = lambda text: list(model.embed([text]))[0]
+            try:
+                from fastembed import TextEmbedding
+                model = TextEmbedding("sentence-transformers/all-MiniLM-L6-v2")
+                self.embed_func = lambda text: list(model.embed([text]))[0]
+            except ImportError:
+                raise ImportError("FastEmbed is not installed. Run `pip install quira[local-embed]` or provide a custom embed_func.")
         
         self._typing_task: Optional[asyncio.Task] = None
         self._last_keystroke_time: float = 0.0
@@ -150,8 +153,8 @@ class SpeculativeRetriever:
             )
             return hits
         except Exception as e:
-            logger.warning(f"Search failed, using mocks: {e}")
-            return [{"id": "mock_id", "payload": {"text": "mock chunk text"}}]
+            logger.warning(f"Search failed, returning empty context: {e}")
+            return []
 
     async def on_submit(self, full_query: str) -> List[Dict[str, Any]]:
         """Called when the user hits enter."""

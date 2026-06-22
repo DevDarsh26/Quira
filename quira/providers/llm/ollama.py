@@ -45,6 +45,35 @@ class OllamaProvider(LLMProvider):
             )
             return response["message"]["content"]
 
+    async def stream(self, prompt: str, system_prompt: Optional[str] = None, model: Optional[str] = None):
+        messages = []
+        if system_prompt:
+            messages.append({"role": "system", "content": system_prompt})
+        messages.append({"role": "user", "content": prompt})
+        
+        if asyncio.iscoroutinefunction(self.client.chat):
+            response = await self.client.chat(
+                model=model or self.default_model,
+                messages=messages,
+                stream=True
+            )
+            async for chunk in response:
+                if "message" in chunk and "content" in chunk["message"]:
+                    yield chunk["message"]["content"]
+        else:
+            loop = asyncio.get_event_loop()
+            response = await loop.run_in_executor(
+                None,
+                lambda: self.client.chat(
+                    model=model or self.default_model,
+                    messages=messages,
+                    stream=True
+                )
+            )
+            for chunk in response:
+                if "message" in chunk and "content" in chunk["message"]:
+                    yield chunk["message"]["content"]
+
     def embed(self, text: str) -> List[float]:
         if self._custom_embed_func:
             emb = self._custom_embed_func(text)

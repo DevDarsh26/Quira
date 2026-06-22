@@ -26,10 +26,14 @@ class QdrantStore(VectorStore):
                 limit=limit
             )
         else:
-            hits = self.client.search(
-                collection_name=collection_name,
-                query_vector=query_vector,
-                limit=limit
+            loop = asyncio.get_event_loop()
+            hits = await loop.run_in_executor(
+                None,
+                lambda: self.client.search(
+                    collection_name=collection_name,
+                    query_vector=query_vector,
+                    limit=limit
+                )
             )
         
         return [{"id": hit.id, "payload": hit.payload} for hit in hits]
@@ -54,7 +58,11 @@ class QdrantStore(VectorStore):
                 points=qdrant_points
             )
         else:
-            self.client.upsert(
-                collection_name=collection_name,
-                points=qdrant_points
+            loop = asyncio.get_event_loop()
+            await loop.run_in_executor(
+                None,
+                lambda: self.client.upsert(
+                    collection_name=collection_name,
+                    points=qdrant_points
+                )
             )
