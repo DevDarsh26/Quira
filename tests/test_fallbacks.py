@@ -27,7 +27,7 @@ async def test_vector_store_fallback(failing_primary, working_fallback):
     
     assert len(results) == 1
     assert results[0]["id"] == "fallback_chunk"
-    assert failing_primary.search.call_count == 2 # 1 initial + 1 retry before fallback
+    assert failing_primary.search.call_count == 3 # 1 initial + 2 retries
     working_fallback.search.assert_called_once()
 
 @pytest.mark.asyncio
@@ -37,8 +37,8 @@ async def test_vector_store_no_fallback_total_failure(failing_primary):
     with pytest.raises(VectorStoreUnavailableError) as exc_info:
         await fb_store.search("collection", [0.0, 1.0])
         
-    assert "Primary provider failed after 2 retries" in str(exc_info.value)
-    assert failing_primary.search.call_count == 2
+    assert "Primary vector store failed and no fallback available." in str(exc_info.value)
+    assert failing_primary.search.call_count == 3
 
 @pytest.mark.asyncio
 async def test_llm_fallback(failing_primary, working_fallback):
@@ -47,5 +47,5 @@ async def test_llm_fallback(failing_primary, working_fallback):
     answer = await fb_llm.complete("Hello")
     
     assert answer == "Fallback answer"
-    assert failing_primary.complete.call_count == 2
+    assert failing_primary.complete.call_count == 3
     working_fallback.complete.assert_called_once()
