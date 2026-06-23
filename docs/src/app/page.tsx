@@ -235,24 +235,24 @@ async for chunk in pipeline.process_submission_stream(
                   <CopyButton text={codeSnippet} />
                 </div>
                 <div className="p-5 font-mono text-[13px] leading-[1.7] text-zinc-300 overflow-x-auto">
-<pre><code><span className="text-violet-400">from</span> quira <span className="text-violet-400">import</span> quiraPipeline, UserSession
-<span className="text-violet-400">from</span> quira.integrations <span className="text-violet-400">import</span> QuiraRetriever
-
-pipeline = quiraPipeline(
-    vector_store=<span className="text-emerald-400">&quot;qdrant&quot;</span>,
-    cache=<span className="text-emerald-400">&quot;redis&quot;</span>,
-    llm=<span className="text-emerald-400">&quot;openai/gpt-4o&quot;</span>
-)
-
-<span className="text-zinc-600"># 100% LangChain compatible</span>
-retriever = QuiraRetriever(pipeline=pipeline)
-docs = retriever.invoke(<span className="text-emerald-400">&quot;What is Context Tetris?&quot;</span>)
-
-<span className="text-zinc-600"># Full pipeline with streaming</span>
-session = UserSession(<span className="text-emerald-400">&quot;user_123&quot;</span>)
-<span className="text-violet-400">async for</span> chunk <span className="text-violet-400">in</span> pipeline.process_submission_stream(
-    session, <span className="text-emerald-400">&quot;What is quantum mechanics?&quot;</span>
-):
+<pre><code><span className="text-violet-400">from</span> quira <span className="text-violet-400">import</span> quiraPipeline, UserSession{"\n"}
+<span className="text-violet-400">from</span> quira.integrations <span className="text-violet-400">import</span> QuiraRetriever{"\n"}
+{"\n"}
+pipeline = quiraPipeline({"\n"}
+    vector_store=<span className="text-emerald-400">&quot;qdrant&quot;</span>,{"\n"}
+    cache=<span className="text-emerald-400">&quot;redis&quot;</span>,{"\n"}
+    llm=<span className="text-emerald-400">&quot;openai/gpt-4o&quot;</span>{"\n"}
+){"\n"}
+{"\n"}
+<span className="text-zinc-600"># 100% LangChain compatible</span>{"\n"}
+retriever = QuiraRetriever(pipeline=pipeline){"\n"}
+docs = retriever.invoke(<span className="text-emerald-400">&quot;What is Context Tetris?&quot;</span>){"\n"}
+{"\n"}
+<span className="text-zinc-600"># Full pipeline with streaming</span>{"\n"}
+session = UserSession(<span className="text-emerald-400">&quot;user_123&quot;</span>){"\n"}
+<span className="text-violet-400">async for</span> chunk <span className="text-violet-400">in</span> pipeline.process_submission_stream({"\n"}
+    session, <span className="text-emerald-400">&quot;What is quantum mechanics?&quot;</span>{"\n"}
+):{"\n"}
     <span className="text-sky-400">print</span>(chunk, end=<span className="text-emerald-400">&quot;&quot;</span>, flush=<span className="text-orange-400">True</span>)</code></pre>
                 </div>
               </div>
