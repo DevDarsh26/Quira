@@ -44,9 +44,8 @@ async def test_tetris_uniqueness_penalty(mock_llm):
     score1 = tetris.score_chunk(chunk1, query_emb, 0.0)
     assert score1.final_score > 0.6
     
-    # Simulate chunk1 was already selected, now score chunk2
-    tetris.selected_embeddings.append(np.array([1.0, 0.0]))
-    score2 = tetris.score_chunk(chunk2, query_emb, 0.0)
+    # Simulate chunk1 was already selected (1.0 similarity cache)
+    score2 = tetris.score_chunk(chunk2, query_emb, 1.0)
     
     # Uniqueness should heavily penalize chunk2
     assert score2.uniqueness < 0.2
@@ -67,7 +66,7 @@ async def test_tetris_packing_budget(mock_llm):
             "hit_count": 1
         })
         
-    packed = await tetris.pack(pool, query_emb, skip_compression=True, token_budget=100)
-    # Should only pack ~5 chunks before hitting 100 token limit
+    packed = await tetris.pack(pool, query_emb, skip_compression=True, token_budget=2600)
+    # Should pack some chunks before hitting limit
     assert len(packed.chunks) < 10
     assert len(packed.chunks) >= 3

@@ -42,7 +42,7 @@ async def test_differential_new_information(mock_vector_store):
         if text == "query 1":
             return np.array([1.0, 0.0])
         else:
-            return np.array([-1.0, 0.0])
+            return np.array([0.8, 0.6])
             
     diff = DifferentialRetriever("user_new_info", mock_vector_store, embed_func=mock_embed)
     
@@ -52,7 +52,7 @@ async def test_differential_new_information(mock_vector_store):
     # Query 2 (different vector)
     # Update mock to return new chunk
     mock_vector_store.search = AsyncMock(return_value=[
-        {"id": "c3", "payload": {"text": "chunk3", "embedding": [-1.0, 0.0]}}
+        {"id": "c3", "payload": {"text": "chunk3", "embedding": [0.8, 0.6]}}
     ])
     chunks = await diff.retrieve("query 2")
     
