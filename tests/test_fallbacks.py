@@ -2,7 +2,7 @@ import pytest
 import asyncio
 from unittest.mock import AsyncMock, MagicMock
 from quira.providers.fallback import FallbackVectorStore, FallbackLLMProvider
-from quira.exceptions import QuiraProviderError
+from quira.exceptions import VectorStoreUnavailableError
 
 @pytest.fixture
 def failing_primary():
@@ -34,7 +34,7 @@ async def test_vector_store_fallback(failing_primary, working_fallback):
 async def test_vector_store_no_fallback_total_failure(failing_primary):
     fb_store = FallbackVectorStore(failing_primary, fallback=None)
     
-    with pytest.raises(QuiraProviderError) as exc_info:
+    with pytest.raises(VectorStoreUnavailableError) as exc_info:
         await fb_store.search("collection", [0.0, 1.0])
         
     assert "Primary provider failed after 2 retries" in str(exc_info.value)
