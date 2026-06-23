@@ -61,7 +61,7 @@ class ContextTetris:
     def _count_tokens(self, text: str) -> int:
         if self.tokenizer:
             return len(self.tokenizer.encode(text))
-        return len(text.split()) * 1.3 # Rough approximation if tiktoken fails
+        return int(len(text) / 4) # Standard approximation if tiktoken fails
 
     def _cosine_similarity(self, emb1: np.ndarray, emb2: np.ndarray) -> float:
         norm = np.linalg.norm(emb1) * np.linalg.norm(emb2)
@@ -95,7 +95,7 @@ class ContextTetris:
         elif not self.nlp:
             import re
             # Fallback heuristic: count capitalized words, numbers, and basic entities
-            ent_count = len(re.findall(r'\b[A-Z][a-z]+\b|\b\d+\b', text))
+            ent_count = len(re.findall(r'\b[A-Z][a-zA-Z0-9-]+\b|\b\d+(?:\.\d+)?\b', text))
             density = min(1.0, ent_count / max(1, (tokens / 100)))
         else:
             doc = self.nlp(text)
@@ -118,7 +118,7 @@ class ContextTetris:
             preserved_str = ", ".join(set(preserved))
         else:
             import re
-            preserved = re.findall(r'\b[A-Z][a-z]+\b|\b\d+\b', text)
+            preserved = re.findall(r'\b[A-Z][a-zA-Z0-9-]+\b|\b\d+(?:\.\d+)?\b', text)
             # Keep only a sample of them to avoid huge prompt if no spacy
             preserved_str = ", ".join(set(preserved[:15]))
         

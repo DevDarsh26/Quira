@@ -6,8 +6,9 @@
 
   <br/>
 
+  <a href="https://quira.darshmodii.in"><img src="https://img.shields.io/badge/Docs-Website-0969da?style=for-the-badge&logo=vercel" alt="Website" /></a>
   <a href="https://pypi.org/project/quira/"><img src="https://img.shields.io/pypi/v/quira?color=0969da&style=for-the-badge&logo=pypi&logoColor=white" alt="PyPI" /></a>
-  <a href="https://github.com/DevDarsh26/Quira/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-22c55e.svg?style=for-the-badge" alt="License" /></a>
+  <a href="https://github.com/DevDarsh26/Quira/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-Apache_2.0-22c55e.svg?style=for-the-badge" alt="License" /></a>
   <a href="https://www.python.org/"><img src="https://img.shields.io/badge/Python-3.11+-f59e0b.svg?style=for-the-badge&logo=python&logoColor=white" alt="Python" /></a>
   <a href="https://github.com/DevDarsh26/Quira"><img src="https://img.shields.io/badge/GitHub-DevDarsh26-181717?style=for-the-badge&logo=github" alt="GitHub" /></a>
 

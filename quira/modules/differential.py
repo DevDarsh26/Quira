@@ -117,7 +117,7 @@ class DifferentialRetriever:
                 query_vector=current_emb.tolist() if hasattr(current_emb, "tolist") else list(current_emb),
                 limit=15
             )
-            candidates = [{"id": hit["id"], "text": hit["payload"].get("text", ""), "embedding": np.array(hit["payload"].get("embedding", current_emb)), "hit_count": 0} for hit in hits]
+            candidates = [{"id": hit["id"], "text": hit["payload"].get("text", ""), "embedding": np.array(hit.get("vector") or hit["payload"].get("embedding", current_emb)), "hit_count": 0} for hit in hits]
         except Exception as e:
             logger.warning(f"Search failed, returning empty context: {e}")
             candidates = []

@@ -17,8 +17,7 @@ from quira.providers.fallback import FallbackVectorStore, FallbackLLMProvider
 
 logger = logging.getLogger("quira.pipeline")
 
-# Apply nest_asyncio to allow asyncio.run() within an already running loop
-nest_asyncio.apply()
+# Apply nest_asyncio in sync wrappers to allow asyncio.run() within an already running loop
 
 class quiraPipeline:
     """
@@ -53,6 +52,9 @@ class quiraPipeline:
             elif v_type == "supabase":
                 from quira.providers.vector.supabase_store import SupabaseStore
                 self.vector_store = SupabaseStore()
+            elif v_type == "milvus":
+                from quira.providers.vector.milvus import MilvusStore
+                self.vector_store = MilvusStore()
             else:
                 raise ValueError(f"Unknown vector_store string: {vector_store}")
         else:
@@ -75,6 +77,9 @@ class quiraPipeline:
                 elif v_type == "supabase":
                     from quira.providers.vector.supabase_store import SupabaseStore
                     fb_vs = SupabaseStore()
+                elif v_type == "milvus":
+                    from quira.providers.vector.milvus import MilvusStore
+                    fb_vs = MilvusStore()
                 else:
                     raise ValueError(f"Unknown fallback_vector_store string: {fallback_vector_store}")
             else:
@@ -95,6 +100,9 @@ class quiraPipeline:
                 self.cache = InMemoryCache()
             elif c_type == "disk":
                 self.cache = DiskCache()
+            elif c_type == "memcached":
+                from quira.providers.cache.memcached import MemcachedProvider
+                self.cache = MemcachedProvider()
             else:
                 raise ValueError(f"Unknown cache string: {cache}")
         else:
@@ -119,6 +127,9 @@ class quiraPipeline:
             elif provider_name == "litellm":
                 from quira.providers.llm.litellm_provider import LiteLLMProvider
                 self.llm = LiteLLMProvider(default_model=model_name or "openai/gpt-4o", embed_func=embed_func)
+            elif provider_name == "gemini":
+                from quira.providers.llm.gemini import GeminiProvider
+                self.llm = GeminiProvider(default_model=model_name or "models/gemini-1.5-pro")
             else:
                 raise ValueError(f"Unknown LLM provider string: {llm}")
         else:
@@ -143,6 +154,9 @@ class quiraPipeline:
                 elif provider_name == "litellm":
                     from quira.providers.llm.litellm_provider import LiteLLMProvider
                     fb_llm = LiteLLMProvider(default_model=model_name or "openai/gpt-4o", embed_func=embed_func)
+                elif provider_name == "gemini":
+                    from quira.providers.llm.gemini import GeminiProvider
+                    fb_llm = GeminiProvider(default_model=model_name or "models/gemini-1.5-pro")
                 else:
                     raise ValueError(f"Unknown fallback_llm string: {fallback_llm}")
             else:
@@ -196,7 +210,7 @@ class quiraPipeline:
             speculative_results = []
             
         # Dead Code Fix: merge speculative results into the differential pool
-        diff_pool = self.differential.get_context_pool()
+        diff_pool = [dict(c) for c in self.differential.get_context_pool()]
         existing_ids = {c.get("id") for c in diff_pool}
         for chunk in speculative_results:
             cid = chunk.get("id")
@@ -204,7 +218,7 @@ class quiraPipeline:
                 diff_pool.append({
                     "id": cid,
                     "text": chunk.get("payload", {}).get("text", ""),
-                    "embedding": chunk.get("payload", {}).get("embedding", []),
+                    "embedding": chunk.get("vector", chunk.get("payload", {}).get("embedding", [])),
                     "hit_count": 1
                 })
                 existing_ids.add(cid)
@@ -255,7 +269,7 @@ class quiraPipeline:
             speculative_results = []
             
         # Dead Code Fix: merge speculative results into the differential pool
-        diff_pool = self.differential.get_context_pool()
+        diff_pool = [dict(c) for c in self.differential.get_context_pool()]
         existing_ids = {c.get("id") for c in diff_pool}
         for chunk in speculative_results:
             cid = chunk.get("id")
@@ -263,7 +277,7 @@ class quiraPipeline:
                 diff_pool.append({
                     "id": cid,
                     "text": chunk.get("payload", {}).get("text", ""),
-                    "embedding": chunk.get("payload", {}).get("embedding", []),
+                    "embedding": chunk.get("vector", chunk.get("payload", {}).get("embedding", [])),
                     "hit_count": 1
                 })
                 existing_ids.add(cid)
@@ -288,6 +302,44 @@ class quiraPipeline:
         async for chunk in self.llm.stream(prompt=prompt, system_prompt=sys_prompt):
             yield chunk
 
+    async def process_retrieval(
+        self, 
+        session: UserSession, 
+        final_query: str,
+        force_full_fetch: bool = False
+    ) -> List[Dict[str, Any]]:
+        """
+        Retrieval-only pipeline. Skips Context Tetris compression and LLM generation.
+        Returns the differential context pool after merging speculative results.
+        """
+        self.differential.user_id = session.user_id
+        
+        if force_full_fetch:
+            self.differential.force_reset()
+        
+        try:
+            speculative_results = await self.speculative.on_submit(final_query)
+            new_chunks = await self.differential.retrieve(final_query)
+        except Exception as e:
+            logger.error(f"Retrieval failed: {e}")
+            speculative_results = []
+            
+        diff_pool = [dict(c) for c in self.differential.get_context_pool()]
+        existing_ids = {c.get("id") for c in diff_pool}
+        for chunk in speculative_results:
+            cid = chunk.get("id")
+            if cid and cid not in existing_ids:
+                diff_pool.append({
+                    "id": cid,
+                    "text": chunk.get("payload", {}).get("text", ""),
+                    "embedding": chunk.get("vector", chunk.get("payload", {}).get("embedding", [])),
+                    "hit_count": 1
+                })
+                existing_ids.add(cid)
+        
+        session.context_pool = diff_pool
+        return diff_pool
+
     async def ingest_text(self, text: str, user_id: str = "default_user", chunk_size: int = 1000, overlap: int = 200) -> int:
         return await self.ingestor.ingest_text(user_id, text, chunk_size, overlap)
 
@@ -299,12 +351,19 @@ class quiraPipeline:
 
     # --- SYNC WRAPPERS ---
     def handle_typing_event_sync(self, session: UserSession, keystroke_stream: str) -> None:
+        nest_asyncio.apply()
         asyncio.run(self.handle_typing_event(session, keystroke_stream))
 
     def process_submission_sync(self, session: UserSession, final_query: str) -> str:
+        nest_asyncio.apply()
         return asyncio.run(self.process_submission(session, final_query))
 
+    def process_retrieval_sync(self, session: UserSession, final_query: str) -> List[Dict[str, Any]]:
+        nest_asyncio.apply()
+        return asyncio.run(self.process_retrieval(session, final_query))
+
     def process_submission_stream_sync(self, session: UserSession, final_query: str):
+        nest_asyncio.apply()
         async def _run_stream():
             async for chunk in self.process_submission_stream(session, final_query):
                 yield chunk
@@ -318,10 +377,13 @@ class quiraPipeline:
                 break
 
     def ingest_text_sync(self, text: str, user_id: str = "default_user", chunk_size: int = 1000, overlap: int = 200) -> int:
+        nest_asyncio.apply()
         return asyncio.run(self.ingest_text(text, user_id, chunk_size, overlap))
 
     def ingest_pdf_sync(self, file_path: str, user_id: str = "default_user", chunk_size: int = 1000, overlap: int = 200) -> int:
+        nest_asyncio.apply()
         return asyncio.run(self.ingest_pdf(file_path, user_id, chunk_size, overlap))
 
     def ingest_file_sync(self, file_path: str, user_id: str = "default_user", chunk_size: int = 1000, overlap: int = 200) -> int:
+        nest_asyncio.apply()
         return asyncio.run(self.ingest_file(file_path, user_id, chunk_size, overlap))

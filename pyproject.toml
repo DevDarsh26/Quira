@@ -8,7 +8,7 @@ version = "0.3.3"
 description = "Faster and smarter Retrieval Augmented Generation using Speculative Retrieval and Context Tetris."
 readme = "README.md"
 requires-python = ">=3.11"
-license = "MIT"
+license = {text = "MIT"}
 authors = [{name = "Darsh Modi"}]
 classifiers = [
     "Development Status :: 3 - Alpha",
@@ -88,6 +88,15 @@ integrations = [
     "langchain-core>=0.1.0",
     "llama-index-core>=0.10.0"
 ]
+milvus = [
+    "pymilvus>=2.3.0"
+]
+memcached = [
+    "aiomcache>=0.8.0"
+]
+gemini = [
+    "google-generativeai>=0.4.0"
+]
 all = [
-    "quira[pdf,local-embed,spacy,pinecone,chroma,qdrant,weaviate,supabase,redis,openai,anthropic,groq,ollama,litellm,integrations]"
+    "quira[pdf,local-embed,spacy,pinecone,chroma,qdrant,weaviate,supabase,redis,openai,anthropic,groq,ollama,litellm,integrations,milvus,memcached,gemini]"
 ]

@@ -2,6 +2,7 @@ import time
 import logging
 import asyncio
 import uuid
+import hashlib
 from typing import Any, List, Dict, Optional
 
 try:
@@ -34,22 +35,31 @@ class DocumentIngestor:
 
     def _chunk_text(self, text: str, chunk_size: int = 1000, overlap: int = 200) -> List[str]:
         """
-        Splits text into chunks of `chunk_size` characters with `overlap` characters.
+        Splits text into chunks preserving paragraphs and sentences if possible.
         """
+        import re
         chunks = []
-        start = 0
-        text_len = len(text)
-        
-        while start < text_len:
-            end = start + chunk_size
-            chunk = text[start:end]
-            chunks.append(chunk)
-            # Break if this is the last chunk
-            if end >= text_len:
-                break
-            start += chunk_size - overlap
+        paragraphs = re.split(r'\n\n+', text)
+        current_chunk = ""
+        for p in paragraphs:
+            if len(current_chunk) + len(p) < chunk_size:
+                current_chunk += p + "\n\n"
+            else:
+                if current_chunk:
+                    chunks.append(current_chunk.strip())
+                if len(p) > chunk_size:
+                    start = 0
+                    while start < len(p):
+                        end = start + chunk_size
+                        chunks.append(p[start:end])
+                        start += chunk_size - overlap
+                    current_chunk = ""
+                else:
+                    current_chunk = p + "\n\n"
+        if current_chunk:
+            chunks.append(current_chunk.strip())
             
-        return chunks
+        return chunks if chunks else [text]
 
     def extract_pdf_text(self, file_path: str) -> str:
         """
@@ -97,6 +107,38 @@ class DocumentIngestor:
         with open(file_path, "r", encoding="utf-8") as f:
             return f.read()
 
+    def _process_text_sync(self, text: str, chunk_size: int, overlap: int) -> List[Any]:
+        chunks = self._chunk_text(text, chunk_size, overlap)
+        
+        try:
+            from qdrant_client.models import PointStruct
+        except ImportError:
+            class PointStruct:
+                def __init__(self, id, vector, payload):
+                    self.id = id
+                    self.vector = vector
+                    self.payload = payload
+
+        points = []
+        for chunk in chunks:
+            emb = self.embed_func(chunk)
+            if isinstance(emb, np.ndarray):
+                emb_list = emb.tolist()
+            else:
+                emb_list = list(emb)
+                
+            chunk_id = str(uuid.UUID(hex=hashlib.md5(chunk.encode("utf-8")).hexdigest()))
+            points.append(PointStruct(
+                id=chunk_id,
+                vector=emb_list,
+                payload={
+                    "text": chunk,
+                    "created_at": time.time(),
+                    "source": "ingestion"
+                }
+            ))
+        return points
+
     async def ingest_text(self, user_id: str, text: str, chunk_size: int = 1000, overlap: int = 200) -> int:
         """
         Chunks text, generates embeddings, and upserts them to Qdrant.
@@ -106,41 +148,8 @@ class DocumentIngestor:
             logger.warning(f"User {user_id}: Empty text provided for ingestion.")
             return 0
 
-        chunks = self._chunk_text(text, chunk_size, overlap)
-        logger.info(f"User {user_id}: Split text into {len(chunks)} chunks.")
-        
-        # We assume qdrant_client is either the official sync or async client
-        # Create PointStructs
-        try:
-            from qdrant_client.models import PointStruct
-        except ImportError:
-            # Fallback if qdrant models are not available locally (e.g. mock mode)
-            class PointStruct:
-                def __init__(self, id, vector, payload):
-                    self.id = id
-                    self.vector = vector
-                    self.payload = payload
-
-        points = []
-        for chunk in chunks:
-            # Generate embedding
-            emb = self.embed_func(chunk)
-            if isinstance(emb, np.ndarray):
-                emb_list = emb.tolist()
-            else:
-                emb_list = list(emb)
-                
-            chunk_id = str(uuid.uuid4())
-            points.append(PointStruct(
-                id=chunk_id,
-                vector=emb_list,
-                payload={
-                    "text": chunk,
-                    "embedding": emb_list,
-                    "created_at": time.time(),
-                    "source": "ingestion"
-                }
-            ))
+        # Offload to thread to prevent blocking the event loop
+        points = await asyncio.to_thread(self._process_text_sync, text, chunk_size, overlap)
 
         # Upsert into VectorStore
         collection_name = f"quira_{user_id}"
@@ -169,7 +178,7 @@ class DocumentIngestor:
         Helper method to extract text from a PDF and ingest it in one go.
         """
         logger.info(f"User {user_id}: Extracting text from PDF '{file_path}'...")
-        text = self.extract_pdf_text(file_path)
+        text = await asyncio.to_thread(self.extract_pdf_text, file_path)
         return await self.ingest_text(user_id, text, chunk_size, overlap)
 
     async def ingest_file(self, user_id: str, file_path: str, chunk_size: int = 1000, overlap: int = 200) -> int:
@@ -180,15 +189,15 @@ class DocumentIngestor:
         logger.info(f"User {user_id}: Extracting text from '{file_path}'...")
         
         if ext == ".pdf":
-            text = self.extract_pdf_text(file_path)
+            text = await asyncio.to_thread(self.extract_pdf_text, file_path)
         elif ext == ".docx":
-            text = self.extract_docx_text(file_path)
+            text = await asyncio.to_thread(self.extract_docx_text, file_path)
         elif ext in [".html", ".htm"]:
-            text = self.extract_html_text(file_path)
+            text = await asyncio.to_thread(self.extract_html_text, file_path)
         elif ext == ".csv":
-            text = self.extract_csv_text(file_path)
+            text = await asyncio.to_thread(self.extract_csv_text, file_path)
         elif ext in [".md", ".markdown", ".txt"]:
-            text = self.extract_markdown_text(file_path)
+            text = await asyncio.to_thread(self.extract_markdown_text, file_path)
         else:
             raise ValueError(f"Unsupported file extension: {ext}")
             

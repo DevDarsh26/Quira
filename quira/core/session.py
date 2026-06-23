@@ -22,3 +22,23 @@ class UserSession:
     
     # Speculative Retrieval state
     current_draft_query: str = ""
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Serializes the session state (omitting websocket)."""
+        return {
+            "user_id": self.user_id,
+            "context_pool": self.context_pool,
+            "conversation_history": self.conversation_history,
+            "turn_count": self.turn_count,
+            "current_draft_query": self.current_draft_query
+        }
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> UserSession:
+        """Deserializes session state."""
+        session = cls(user_id=data["user_id"])
+        session.context_pool = data.get("context_pool", [])
+        session.conversation_history = data.get("conversation_history", [])
+        session.turn_count = data.get("turn_count", 0)
+        session.current_draft_query = data.get("current_draft_query", "")
+        return session

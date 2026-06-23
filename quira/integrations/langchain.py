@@ -30,12 +30,8 @@ class QuiraRetriever(BaseRetriever):
         self.session = UserSession(user_id=self.user_id)
 
     def _get_relevant_documents(self, query: str, *, run_manager: Any = None) -> List[Document]:
-        # We use the sync wrapper
-        answer = self.pipeline.process_submission_sync(self.session, query)
-        
-        # In a real integration, you might want to extract the actual chunks from session.context_pool
-        # and return them as LangChain Documents. For now, we return the generated answer as a doc,
-        # plus the context pool as metadata.
+        # Use the retrieval-only wrapper to avoid burning LLM tokens
+        self.pipeline.process_retrieval_sync(self.session, query)
         
         docs = []
         for chunk in self.session.context_pool:
@@ -51,8 +47,8 @@ class QuiraRetriever(BaseRetriever):
         return docs
 
     async def _aget_relevant_documents(self, query: str, *, run_manager: Any = None) -> List[Document]:
-        # Async version
-        answer = await self.pipeline.process_submission(self.session, query)
+        # Async version of retrieval-only
+        await self.pipeline.process_retrieval(self.session, query)
         
         docs = []
         for chunk in self.session.context_pool:

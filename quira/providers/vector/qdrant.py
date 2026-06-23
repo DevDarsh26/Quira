@@ -26,7 +26,8 @@ class QdrantStore(VectorStore):
             hits = await self.client.search(
                 collection_name=collection_name,
                 query_vector=query_vector,
-                limit=limit
+                limit=limit,
+                with_vectors=True
             )
         else:
             loop = asyncio.get_event_loop()
@@ -35,11 +36,12 @@ class QdrantStore(VectorStore):
                 lambda: self.client.search(
                     collection_name=collection_name,
                     query_vector=query_vector,
-                    limit=limit
+                    limit=limit,
+                    with_vectors=True
                 )
             )
         
-        return [{"id": hit.id, "payload": hit.payload} for hit in hits]
+        return [{"id": hit.id, "payload": hit.payload, "vector": getattr(hit, "vector", None)} for hit in hits]
 
     async def upsert(self, collection_name: str, points: List[Dict[str, Any]]) -> None:
         try:
