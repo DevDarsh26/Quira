@@ -8,13 +8,15 @@ interface AnimatedSectionProps {
   className?: string;
   delay?: number;
   direction?: "up" | "down" | "left" | "right" | "none";
+  id?: string;
 }
 
 export function AnimatedSection({ 
   children, 
   className = "", 
   delay = 0,
-  direction = "up" 
+  direction = "up",
+  id
 }: AnimatedSectionProps) {
   
   const yOffset = direction === "up" ? 40 : direction === "down" ? -40 : 0;
@@ -27,6 +29,7 @@ export function AnimatedSection({
       viewport={{ once: true, margin: "-100px" }}
       transition={{ duration: 0.7, delay, ease: [0.21, 0.47, 0.32, 0.98] }}
       className={className}
+      id={id}
     >
       {children}
     </motion.div>
