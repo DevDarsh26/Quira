@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import Link from "next/link";
 import Image from "next/image";
-import { FileText } from "lucide-react";
+import { ThemeProvider } from "@/components/ThemeProvider";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -49,9 +50,11 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased dark`}
+      suppressHydrationWarning
+      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased overflow-x-hidden`}
     >
-      <body className="min-h-full flex flex-col bg-background text-foreground selection:bg-primary/30">
+      <body className="min-h-full flex flex-col bg-background text-foreground selection:bg-black/10 dark:selection:bg-white/10 overflow-x-hidden">
+        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false} disableTransitionOnChange>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
@@ -88,45 +91,47 @@ export default function RootLayout({
           }}
         />
         
-        {/* Sleek Minimal Navbar */}
-        <header className="sticky top-0 z-50 w-full border-b border-white/[0.06] bg-[#0a0a0a]/80 backdrop-blur-xl">
-          <div className="container mx-auto px-6 h-14 flex items-center justify-between">
-            <Link href="/" className="flex items-center gap-2.5 font-bold text-lg tracking-tighter hover:opacity-80 transition-opacity">
-              <Image src="/quira_logo.png" alt="Quira Logo" width={28} height={28} className="object-contain rounded-md" priority />
-              <span>Quira</span>
+        {/* Navbar */}
+        <header className="sticky top-0 z-50 w-full border-b border-zinc-200 dark:border-white/6 bg-background/70 backdrop-blur-xl">
+          <div className="max-w-[1100px] mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
+            <Link href="/" className="flex items-center gap-2.5 hover:opacity-80 transition-opacity">
+              <Image src="/quira_logo.png" alt="Quira" width={28} height={28} className="rounded-md" />
+              <span className="font-semibold text-[15px] tracking-tight text-zinc-900 dark:text-zinc-100">Quira</span>
             </Link>
             
-            <nav className="flex items-center gap-5 text-sm font-medium text-zinc-400">
-              <Link href="/docs" className="hover:text-white transition-colors">Docs</Link>
-              <Link href="/#quickstart" className="hover:text-white transition-colors hidden sm:block">Quickstart</Link>
-              
-              <div className="w-px h-4 bg-white/10 hidden sm:block"></div>
-              
-              <a href="https://github.com/DevDarsh26/Quira" target="_blank" rel="noreferrer" className="flex items-center gap-2 hover:text-white transition-colors">
-                <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.03c3.15-.38 6.5-1.4 6.5-7.17a5.1 5.1 0 0 0-1.4-3.5 4.6 4.6 0 0 0-.1-3.4s-1.1-.35-3.5 1.3a11.5 11.5 0 0 0-6 0C6.1 2.5 5 2.85 5 2.85a4.6 4.6 0 0 0-.1 3.4 5.1 5.1 0 0 0-1.4 3.5c0 5.77 3.35 6.79 6.5 7.17A4.8 4.8 0 0 0 9 18v4"></path></svg>
+            <nav className="flex items-center gap-3 sm:gap-6 text-[13px] font-medium text-zinc-500">
+              <Link href="/docs" className="hover:text-zinc-900 dark:hover:text-white transition-colors duration-150">Docs</Link>
+              <Link href="/#features" className="hover:text-zinc-900 dark:hover:text-white transition-colors duration-150 hidden sm:block">Features</Link>
+              <a href="https://pypi.org/project/quira/" target="_blank" rel="noreferrer" className="hover:text-zinc-900 dark:hover:text-white transition-colors duration-150 hidden sm:block">PyPI</a>
+              <div className="w-px h-3.5 bg-zinc-200 dark:bg-white/8 hidden sm:block" />
+              <a href="https://github.com/DevDarsh26/Quira" target="_blank" rel="noreferrer" className="flex items-center gap-1.5 hover:text-zinc-900 dark:hover:text-white transition-colors duration-150">
+                <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.03c3.15-.38 6.5-1.4 6.5-7.17a5.1 5.1 0 0 0-1.4-3.5 4.6 4.6 0 0 0-.1-3.4s-1.1-.35-3.5 1.3a11.5 11.5 0 0 0-6 0C6.1 2.5 5 2.85 5 2.85a4.6 4.6 0 0 0-.1 3.4 5.1 5.1 0 0 0-1.4 3.5c0 5.77 3.35 6.79 6.5 7.17A4.8 4.8 0 0 0 9 18v4" /></svg>
                 <span className="hidden sm:inline">GitHub</span>
               </a>
-              <a href="https://pypi.org/project/quira/" target="_blank" rel="noreferrer" className="flex items-center gap-2 hover:text-white transition-colors">
-                <FileText className="w-4 h-4" />
-                <span className="hidden sm:inline">PyPI</span>
-              </a>
+              <ThemeToggle />
             </nav>
           </div>
         </header>
 
         {/* Main Content */}
-        <main className="flex-1 flex flex-col">
+        <main className="flex-1 flex flex-col relative w-full">
           {children}
         </main>
         
         {/* Footer */}
-        <footer className="border-t border-white/[0.06] py-8 text-center text-sm text-zinc-500">
-          <div className="container mx-auto px-6">
-            <p>Built for the modern AI stack. Open source under the <strong className="text-zinc-400">MIT License</strong>.</p>
-            <p className="mt-2">Made by <a href="https://darshmodii.in" target="_blank" rel="noreferrer" className="text-white hover:underline font-medium">Darsh Modii</a></p>
+        <footer className="border-t border-zinc-200 dark:border-white/6 py-10">
+          <div className="max-w-[1100px] mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-zinc-600">
+            <p>&copy; {new Date().getFullYear()} Quira &middot; MIT License</p>
+            <p>
+              Built by{" "}
+              <a href="https://darshmodii.in" target="_blank" rel="noreferrer" className="text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors duration-150">
+                Darsh Modii
+              </a>
+            </p>
           </div>
         </footer>
 
+        </ThemeProvider>
       </body>
     </html>
   );

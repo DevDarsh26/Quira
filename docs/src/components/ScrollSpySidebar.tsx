@@ -41,7 +41,7 @@ export function ScrollSpySidebar() {
     <aside className="w-full md:w-64 shrink-0 mb-8 md:mb-0">
       <div className="md:sticky md:top-24 md:space-y-6">
         <div>
-          <h4 className="font-semibold mb-3 md:mb-4 text-foreground tracking-tight text-xs md:text-sm uppercase text-muted-foreground hidden md:block">On this page</h4>
+          <h4 className="font-semibold mb-3 md:mb-4 tracking-tight text-xs md:text-sm uppercase text-zinc-500 dark:text-zinc-400 hidden md:block">On this page</h4>
           <div className="flex flex-row md:flex-col gap-2 md:gap-2.5 text-sm md:border-l md:border-border/50 overflow-x-auto pb-2 md:pb-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             {SECTIONS.map((section) => (
               <Link
@@ -50,8 +50,8 @@ export function ScrollSpySidebar() {
                 className={cn(
                   "whitespace-nowrap px-3 py-1.5 md:px-0 md:pl-4 md:py-0.5 transition-all relative md:border-l-[3px] md:-ml-[2px] rounded-full md:rounded-none border border-border/50 md:border-transparent md:border-l-transparent",
                   activeId === section.id
-                    ? "text-primary font-medium bg-primary/10 md:bg-transparent md:border-l-primary border-primary/20 md:border-y-transparent md:border-r-transparent"
-                    : "text-muted-foreground md:border-l-transparent hover:text-foreground bg-background hover:bg-muted/50 md:bg-transparent md:hover:bg-transparent md:hover:border-l-muted-foreground/50"
+                    ? "text-zinc-900 dark:text-white font-medium bg-zinc-100 dark:bg-white/5 md:bg-transparent md:border-l-zinc-900 dark:md:border-l-white border-zinc-200 dark:border-white/20 md:border-y-transparent md:border-r-transparent"
+                    : "text-zinc-500 dark:text-zinc-400 md:border-l-transparent hover:text-zinc-900 dark:hover:text-white bg-transparent hover:bg-zinc-50 dark:hover:bg-white/5 md:bg-transparent md:hover:bg-transparent md:hover:border-l-zinc-300 dark:md:hover:border-l-white/20"
                 )}
               >
                 {section.label}
