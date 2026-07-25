@@ -154,17 +154,13 @@ export default function RootLayout({
                 <h4 className="font-semibold text-zinc-900 dark:text-white text-[13px] mb-4 tracking-tight">Company</h4>
                 <ul className="space-y-2.5 text-[13px] text-zinc-500">
                   <li><a href="https://darshmodii.in" target="_blank" rel="noreferrer" className="hover:text-zinc-900 dark:hover:text-white transition-colors">Darsh Modii</a></li>
-                  <li><a href="#" className="hover:text-zinc-900 dark:hover:text-white transition-colors">License</a></li>
+                  <li><a href="https://github.com/DevDarsh26/Quira/blob/main/LICENSE" target="_blank" rel="noreferrer" className="hover:text-zinc-900 dark:hover:text-white transition-colors">MIT License</a></li>
                 </ul>
               </div>
             </div>
             
-            <div className="pt-8 border-t border-zinc-200 dark:border-white/10 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-zinc-500">
+            <div className="pt-8 border-t border-zinc-200 dark:border-white/10 flex flex-col md:flex-row items-center justify-center text-xs text-zinc-500">
               <p>&copy; {new Date().getFullYear()} Quira. All rights reserved.</p>
-              <div className="flex gap-4">
-                <a href="#" className="hover:text-zinc-900 dark:hover:text-white transition-colors">Privacy Policy</a>
-                <a href="#" className="hover:text-zinc-900 dark:hover:text-white transition-colors">Terms of Service</a>
-              </div>
             </div>
           </div>
         </footer>

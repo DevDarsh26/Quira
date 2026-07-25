@@ -8,6 +8,8 @@ import { TerminalTypewriter } from "@/components/TerminalTypewriter";
 import { ArchitectureDiagram } from "@/components/ArchitectureDiagram";
 import { BenchmarksSection } from "@/components/BenchmarksSection";
 import { FAQSection } from "@/components/FAQSection";
+import { ContributorsSection } from "@/components/ContributorsSection";
+import { ChangelogSection } from "@/components/ChangelogSection";
 
 /* ── Syntax-highlighted code as raw HTML to avoid JSX escaping issues ── */
 const codeHTML = `<span class="line"><span class="kw">from</span> quira <span class="kw">import</span> quiraPipeline, UserSession</span>
@@ -50,7 +52,7 @@ async for chunk in pipeline.process_submission_stream(
 ):
     print(chunk, end="", flush=True)`;
 
-const installCmd = `pip install "quira[litellm,qdrant]"`;
+const installCmd = `pip install quira`;
 
 export default async function Home() {
   const version = pkg.version || "0.x.x";
@@ -319,6 +321,16 @@ export default async function Home() {
 
         </div>
       </section>
+
+      {/* ══════════════════════════════════════════════════════════════
+          CONTRIBUTORS SECTION
+      ══════════════════════════════════════════════════════════════ */}
+      <ContributorsSection />
+
+      {/* ══════════════════════════════════════════════════════════════
+          CHANGELOG SECTION
+      ══════════════════════════════════════════════════════════════ */}
+      <ChangelogSection />
 
       {/* ══════════════════════════════════════════════════════════════
           FAQ SECTION
