@@ -119,15 +119,53 @@ export default function RootLayout({
         </main>
         
         {/* Footer */}
-        <footer className="border-t border-zinc-200 dark:border-white/6 py-10">
-          <div className="max-w-[1100px] mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-zinc-600">
-            <p>&copy; {new Date().getFullYear()} Quira &middot; MIT License</p>
-            <p>
-              Built by{" "}
-              <a href="https://darshmodii.in" target="_blank" rel="noreferrer" className="text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors duration-150">
-                Darsh Modii
-              </a>
-            </p>
+        <footer className="border-t border-zinc-200 dark:border-white/6 py-16 bg-zinc-50 dark:bg-black">
+          <div className="max-w-[1100px] mx-auto px-4 sm:px-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
+              <div className="col-span-2 md:col-span-1">
+                <Link href="/" className="flex items-center gap-2.5 mb-4">
+                  <Image src="/quira_logo.png" alt="Quira" width={24} height={24} className="rounded-md grayscale opacity-80" />
+                  <span className="font-semibold text-[15px] tracking-tight text-zinc-900 dark:text-zinc-100">Quira</span>
+                </Link>
+                <p className="text-xs text-zinc-500 max-w-xs leading-relaxed">
+                  The high-performance Retrieval Augmented Generation framework built for zero latency.
+                </p>
+              </div>
+              
+              <div>
+                <h4 className="font-semibold text-zinc-900 dark:text-white text-[13px] mb-4 tracking-tight">Product</h4>
+                <ul className="space-y-2.5 text-[13px] text-zinc-500">
+                  <li><Link href="/docs" className="hover:text-zinc-900 dark:hover:text-white transition-colors">Documentation</Link></li>
+                  <li><Link href="/#features" className="hover:text-zinc-900 dark:hover:text-white transition-colors">Features</Link></li>
+                  <li><a href="https://pypi.org/project/quira/" target="_blank" rel="noreferrer" className="hover:text-zinc-900 dark:hover:text-white transition-colors">PyPI</a></li>
+                </ul>
+              </div>
+
+              <div>
+                <h4 className="font-semibold text-zinc-900 dark:text-white text-[13px] mb-4 tracking-tight">Resources</h4>
+                <ul className="space-y-2.5 text-[13px] text-zinc-500">
+                  <li><a href="https://github.com/DevDarsh26/Quira/issues" target="_blank" rel="noreferrer" className="hover:text-zinc-900 dark:hover:text-white transition-colors">Issues</a></li>
+                  <li><a href="https://github.com/DevDarsh26/Quira/discussions" target="_blank" rel="noreferrer" className="hover:text-zinc-900 dark:hover:text-white transition-colors">Discussions</a></li>
+                  <li><a href="https://github.com/DevDarsh26/Quira" target="_blank" rel="noreferrer" className="hover:text-zinc-900 dark:hover:text-white transition-colors">GitHub Repository</a></li>
+                </ul>
+              </div>
+
+              <div>
+                <h4 className="font-semibold text-zinc-900 dark:text-white text-[13px] mb-4 tracking-tight">Company</h4>
+                <ul className="space-y-2.5 text-[13px] text-zinc-500">
+                  <li><a href="https://darshmodii.in" target="_blank" rel="noreferrer" className="hover:text-zinc-900 dark:hover:text-white transition-colors">Darsh Modii</a></li>
+                  <li><a href="#" className="hover:text-zinc-900 dark:hover:text-white transition-colors">License</a></li>
+                </ul>
+              </div>
+            </div>
+            
+            <div className="pt-8 border-t border-zinc-200 dark:border-white/10 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-zinc-500">
+              <p>&copy; {new Date().getFullYear()} Quira. All rights reserved.</p>
+              <div className="flex gap-4">
+                <a href="#" className="hover:text-zinc-900 dark:hover:text-white transition-colors">Privacy Policy</a>
+                <a href="#" className="hover:text-zinc-900 dark:hover:text-white transition-colors">Terms of Service</a>
+              </div>
+            </div>
           </div>
         </footer>
 

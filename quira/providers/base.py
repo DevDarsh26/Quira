@@ -59,3 +59,11 @@ class LLMProvider(ABC):
         and it's often used heavily in CPU-bound contexts.
         """
         pass
+        
+    def count_tokens(self, text: str) -> int:
+        """
+        Estimate or exactly count tokens for a given string.
+        By default, uses a rough 4-chars-per-token heuristic.
+        Should be overridden by specific providers using their native tokenizer (e.g., tiktoken, transformers).
+        """
+        return int(len(text) / 4)

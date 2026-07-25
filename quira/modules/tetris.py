@@ -5,6 +5,8 @@ from typing import List, Dict, Any, Optional, Callable
 import numpy as np
 import tiktoken
 
+from quira.core.telemetry import trace_event
+
 logger = logging.getLogger("quira.tetris")
 logger.setLevel(logging.INFO)
 if not logger.handlers:
@@ -44,11 +46,6 @@ class ContextTetris:
         self.nlp = spacy_model
         self.density_func = density_func
         
-        try:
-            self.tokenizer = tiktoken.get_encoding("cl100k_base")
-        except Exception:
-            self.tokenizer = None
-            
         self._stats = {
             "initial_chunks": 0,
             "selected_chunks": 0,
@@ -59,9 +56,7 @@ class ContextTetris:
         }
 
     def _count_tokens(self, text: str) -> int:
-        if self.tokenizer:
-            return len(self.tokenizer.encode(text))
-        return int(len(text) / 4) # Standard approximation if tiktoken fails
+        return self.llm.count_tokens(text)
 
     def _cosine_similarity(self, emb1: np.ndarray, emb2: np.ndarray) -> float:
         norm = np.linalg.norm(emb1) * np.linalg.norm(emb2)
@@ -105,6 +100,7 @@ class ContextTetris:
 
         return ChunkScore(relevance, recency, uniqueness, density)
 
+    @trace_event(name="quira.tetris.compress_chunk")
     async def compress_chunk(self, chunk: Dict[str, Any], level: str) -> Dict[str, Any]:
         text = chunk.get("text", "")
         
@@ -143,6 +139,7 @@ class ContextTetris:
         new_chunk["text"] = compressed_text
         return new_chunk
 
+    @trace_event(name="quira.tetris.pack")
     async def pack(self, chunks: List[Dict[str, Any]], query_embedding: np.ndarray, token_budget: int = 120000, skip_compression: bool = False) -> PackedContext:
         import asyncio
         logger.info(f"Scoring {len(chunks)} chunks for query...")

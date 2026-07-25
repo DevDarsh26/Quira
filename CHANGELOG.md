@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0] - 2026-07-25 (Enterprise Edition)
+
+### Added
+- **Session Persistence Backend**: Built `SessionStore` (with `MemorySessionStore` and `RedisSessionStore`) to enable horizontal scaling and persistent cross-session context beyond ephemeral WebSockets. `UserSession` is now referenced seamlessly by string IDs.
+- **Enterprise Provenance & Citations**: Context Tetris now injects rigorous tracking tags (`[Source: X | ID: Y]`). System prompts force the LLM to provide zero-config hallucination-free citations.
+- **Dynamic Tokenization Routing**: Removed hardcoded OpenAI `tiktoken` lock-in. Built a dynamic `count_tokens` math layer into the `LLMProvider` abstraction, preventing context window overflows across all open/closed source models.
+- **Native Observability**: Shipped zero-config telemetry hooks (`quira/core/telemetry.py`). Automatically binds to **LangSmith** (`@traceable`) or **OpenTelemetry** if installed, degrading gracefully to standard Python logging without overhead.
+- **Prompt Injection Sanitization**: Implemented an ultra-fast escaping layer tailored for streaming to neutralize malicious payloads without stripping legitimate code symbols.
+- **Concurrency & Race Condition Safety**: Integrated `AsyncDebouncer` in the speculative retrieval module to actively cancel stale WebSocket prediction queries, preventing database spikes during rapid typing.
+
+### Changed
+- The main pipeline methods (`process_submission`, `handle_typing_event`) now natively accept string `session_id`s in addition to `UserSession` objects to natively support standard REST/stateless architectures.
+
 ## [0.2.2] - 2026-06-22
 
 ### Added

@@ -6,7 +6,8 @@ from quira.modules.tetris import ContextTetris
 @pytest.fixture
 def mock_llm():
     llm = MagicMock()
-    llm.complete = AsyncMock(return_value="Compressed chunk output")
+    llm.complete = AsyncMock(return_value="Compressed summary.")
+    llm.count_tokens = MagicMock(return_value=20)
     return llm
 
 @pytest.mark.asyncio

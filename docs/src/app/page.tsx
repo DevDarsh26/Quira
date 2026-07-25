@@ -56,10 +56,10 @@ export default async function Home() {
   const version = pkg.version || "0.x.x";
 
   return (
-    <div className="flex flex-col items-center w-full relative">
+    <div className="flex flex-col items-center w-full relative overflow-hidden">
 
       {/* ── Background ── */}
-      <div className="absolute inset-0 bg-grid -z-10 pointer-events-none" />
+      <div className="absolute inset-0 bg-grid pointer-events-none" />
 
       {/* ══════════════════════════════════════════════════════════════
           HERO SECTION
@@ -95,18 +95,20 @@ export default async function Home() {
 
         {/* CTAs */}
         <AnimatedSection direction="up" delay={0.24}>
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mt-8 w-full sm:w-auto">
-            <Link href="/docs" className="w-full sm:w-auto">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 mt-10 w-full sm:w-auto">
+            <Link href="/docs" className="w-full sm:w-auto relative group">
               <Button
                 size="lg"
-                className="rounded-lg px-6 gap-2 text-[13px] h-10 font-semibold bg-zinc-900 text-white dark:bg-white dark:text-black hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-all w-full"
+                className="relative rounded-md px-8 gap-2 text-[14px] h-11 font-medium bg-white text-black hover:bg-zinc-200 transition-all w-full shadow-lg"
               >
-                Get Started <ArrowRight className="w-3.5 h-3.5" />
+                Get Started <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </Button>
             </Link>
-            <div className="flex items-center gap-2.5 h-10 bg-zinc-100 dark:bg-zinc-900/80 border border-zinc-200 dark:border-white/8 rounded-lg px-4 font-mono text-[13px] text-zinc-600 dark:text-zinc-400 w-full sm:w-auto overflow-hidden">
-              <span className="text-zinc-400 dark:text-zinc-600 select-none shrink-0">$</span>
-              <span className="text-zinc-700 dark:text-zinc-300 truncate">{installCmd}</span>
+            <div className="flex items-center justify-between gap-3 h-11 bg-zinc-900/80 dark:bg-zinc-900/80 backdrop-blur-md border border-zinc-800 dark:border-white/10 rounded-md px-4 font-mono text-[13px] text-zinc-300 w-full sm:w-auto hover:bg-zinc-800/80 transition-colors max-w-full overflow-hidden">
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="text-emerald-500 select-none shrink-0">~</span>
+                <span className="truncate">{installCmd}</span>
+              </div>
               <div className="shrink-0"><CopyButton text={installCmd} /></div>
             </div>
           </div>
@@ -130,103 +132,108 @@ export default async function Home() {
 
       </section>
 
+
+
       {/* ══════════════════════════════════════════════════════════════
-          FEATURES — Bento Grid
+          FEATURES — Alternating Layout
       ══════════════════════════════════════════════════════════════ */}
-      <section id="features" className="w-full max-w-[1100px] mx-auto px-4 sm:px-6 py-14 md:py-20">
+      <section id="features" className="w-full max-w-[1100px] mx-auto px-4 sm:px-6 py-14 md:py-24 space-y-32">
 
-        <AnimatedSection direction="up" delay={0}>
-          <div className="mb-10 text-center sm:text-left">
-            <h2 className="text-2xl md:text-3xl font-bold text-zinc-900 dark:text-white mb-2 tracking-tight">Rethinking Retrieval</h2>
-            <p className="text-[15px] text-zinc-500 max-w-lg">We stripped away the abstractions that make traditional RAG slow and token-hungry.</p>
-          </div>
-        </AnimatedSection>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4 auto-rows-auto">
-
-          {/* ── Speculative Retrieval (wide) ── */}
-          <AnimatedSection direction="up" delay={0.06} className="sm:col-span-2 lg:col-span-4">
-            <div className="group h-full rounded-2xl bg-white dark:bg-zinc-900/60 border border-zinc-200 dark:border-white/6 p-8 md:p-10 flex flex-col justify-between relative overflow-hidden transition-all duration-300 hover:border-zinc-300 dark:hover:border-white/12 hover:shadow-md dark:hover:bg-zinc-900/80">
-              <div className="absolute -top-24 -right-24 w-64 h-64 rounded-full bg-emerald-500/10 dark:bg-white/3 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-              <div className="relative z-10">
-                <div className="w-12 h-12 rounded-xl bg-zinc-100 dark:bg-white/6 border border-zinc-200 dark:border-white/8 flex items-center justify-center mb-8">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-6 h-6 text-zinc-700 dark:text-zinc-300"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                </div>
-                <h3 className="text-xl font-bold text-zinc-900 dark:text-white mb-3">Speculative Retrieval</h3>
-                <p className="text-[15px] text-zinc-600 dark:text-zinc-400 leading-relaxed max-w-md">
-                  Why wait for the LLM to finish thinking? Quira predicts the required context
-                  and pre-fetches it asynchronously. By the time the LLM needs it, the data is already there.
-                </p>
-              </div>
+        {/* Feature 1 */}
+        <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-24">
+          <AnimatedSection direction="up" delay={0.1} className="lg:w-1/2 order-2 lg:order-1">
+            <div className="w-12 h-12 rounded-xl bg-zinc-100 dark:bg-white/5 border border-zinc-200 dark:border-white/10 flex items-center justify-center mb-6">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-6 h-6 text-zinc-900 dark:text-zinc-100"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" strokeLinecap="round" strokeLinejoin="round"/></svg>
             </div>
+            <h3 className="text-2xl md:text-3xl font-bold text-zinc-900 dark:text-white mb-4 tracking-tight">Speculative Retrieval</h3>
+            <p className="text-base text-zinc-600 dark:text-zinc-400 leading-relaxed mb-6">
+              Why wait for the LLM to finish thinking? Quira predicts the required context
+              and pre-fetches it asynchronously. By the time the LLM needs it, the data is already there, eliminating database round-trip latency.
+            </p>
+            <Link href="/docs#speculative-retrieval" className="inline-flex items-center text-sm font-medium text-zinc-900 dark:text-white hover:opacity-70 transition-opacity">
+              Read how it works <ChevronRight className="w-4 h-4 ml-1" />
+            </Link>
           </AnimatedSection>
-
-          {/* ── Context Tetris ── */}
-          <AnimatedSection direction="up" delay={0.12} className="sm:col-span-1 lg:col-span-2">
-            <div className="group h-full rounded-2xl bg-white dark:bg-zinc-900/60 border border-zinc-200 dark:border-white/6 p-8 flex flex-col justify-between relative overflow-hidden transition-all duration-300 hover:border-zinc-300 dark:hover:border-white/12 hover:shadow-md dark:hover:bg-zinc-900/80">
-              <div>
-                <div className="w-10 h-10 rounded-xl bg-zinc-100 dark:bg-white/6 border border-zinc-200 dark:border-white/8 flex items-center justify-center mb-7">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5 text-zinc-700 dark:text-zinc-300"><rect x="3" y="3" width="18" height="18" rx="2" ry="2" strokeLinecap="round" strokeLinejoin="round"/><line x1="3" y1="9" x2="21" y2="9" strokeLinecap="round" strokeLinejoin="round"/><line x1="9" y1="21" x2="9" y2="9" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                </div>
-                <h3 className="text-lg font-bold text-zinc-900 dark:text-white mb-2">Context Tetris</h3>
-                <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
-                  Packs context chunks with algorithmic precision. Achieves 2.6× higher information density.
-                </p>
-              </div>
-            </div>
-          </AnimatedSection>
-
-          {/* ── Differential Context ── */}
-          <AnimatedSection direction="up" delay={0.18} className="sm:col-span-1 lg:col-span-2">
-            <div className="group h-full rounded-2xl bg-white dark:bg-zinc-900/60 border border-zinc-200 dark:border-white/6 p-8 flex flex-col justify-between relative overflow-hidden transition-all duration-300 hover:border-zinc-300 dark:hover:border-white/12 hover:shadow-md dark:hover:bg-zinc-900/80">
-              <div>
-                <div className="w-10 h-10 rounded-xl bg-zinc-100 dark:bg-white/6 border border-zinc-200 dark:border-white/8 flex items-center justify-center mb-7">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5 text-zinc-700 dark:text-zinc-300"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" strokeLinecap="round" strokeLinejoin="round"/><polyline points="7.5 4.21 12 6.81 16.5 4.21" strokeLinecap="round" strokeLinejoin="round"/><polyline points="7.5 19.79 7.5 14.6 3 12" strokeLinecap="round" strokeLinejoin="round"/><polyline points="21 12 16.5 14.6 16.5 19.79" strokeLinecap="round" strokeLinejoin="round"/><polyline points="3.27 6.96 12 12.01 20.73 6.96" strokeLinecap="round" strokeLinejoin="round"/><line x1="12" y1="22.08" x2="12" y2="12" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                </div>
-                <h3 className="text-lg font-bold text-zinc-900 dark:text-white mb-2">Differential States</h3>
-                <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
-                  Only sends the delta of context updates to the LLM, slashing token costs by 40%.
-                </p>
-              </div>
-            </div>
-          </AnimatedSection>
-
-          {/* ── Provider Abstraction (wide) ── */}
-          <AnimatedSection direction="up" delay={0.24} className="sm:col-span-2 lg:col-span-4">
-            <div className="group h-full rounded-2xl bg-white dark:bg-zinc-900/60 border border-zinc-200 dark:border-white/6 p-8 md:p-10 flex flex-col justify-between relative overflow-hidden transition-all duration-300 hover:border-zinc-300 dark:hover:border-white/12 hover:shadow-md dark:hover:bg-zinc-900/80">
-              <div className="flex flex-col md:flex-row md:items-start gap-8">
-                <div className="md:max-w-xs shrink-0">
-                  <div className="w-10 h-10 rounded-xl bg-zinc-100 dark:bg-white/6 border border-zinc-200 dark:border-white/8 flex items-center justify-center mb-6">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5 text-zinc-700 dark:text-zinc-300"><rect x="2" y="7" width="20" height="14" rx="2" ry="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" strokeLinecap="round" strokeLinejoin="round"/></svg>
+          <AnimatedSection direction="up" delay={0.2} className="lg:w-1/2 order-1 lg:order-2 w-full">
+            <div className="aspect-[4/3] rounded-2xl bg-zinc-50 dark:bg-[#0a0a0a] border border-zinc-200 dark:border-white/10 flex items-center justify-center p-8 relative overflow-hidden shadow-sm">
+               <div className="absolute inset-0 bg-grid opacity-10 dark:opacity-20" />
+               {/* Mock UI for feature */}
+               <div className="w-full h-full border border-zinc-200 dark:border-white/10 rounded-xl bg-white dark:bg-zinc-900/50 backdrop-blur-sm p-6 flex flex-col justify-end relative z-10 shadow-sm">
+                  <div className="w-3/4 h-2 bg-zinc-200 dark:bg-zinc-800 rounded mb-4" />
+                  <div className="w-1/2 h-2 bg-zinc-200 dark:bg-zinc-800 rounded mb-8" />
+                  
+                  <div className="w-full flex items-center justify-between border border-emerald-500/30 bg-emerald-500/5 rounded-lg p-3">
+                    <span className="text-xs font-mono text-emerald-600 dark:text-emerald-400">Prefetching complete (12ms)</span>
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                   </div>
-                  <h3 className="text-lg font-bold text-zinc-900 dark:text-white mb-2">Provider Agnostic</h3>
-                  <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
-                    Write code once. Swap out vector DBs, embedding models, and LLMs by changing a single string in your pipeline config.
-                  </p>
-                </div>
-                <div className="flex-1 flex flex-wrap gap-2 mt-4 md:mt-0 items-center justify-center bg-zinc-50/50 dark:bg-black/20 rounded-xl p-4 md:p-6 border border-zinc-100 dark:border-white/5">
-                  {[
-                    { name: "Qdrant" },
-                    { name: "Pinecone" },
-                    { name: "Weaviate" },
-                    { name: "Chroma" },
-                    { name: "Redis" },
-                    { name: "OpenAI" },
-                    { name: "Anthropic" },
-                    { name: "Ollama" },
-                  ].map(p => (
-                    <span 
-                      key={p.name}
-                      className="px-3 py-1.5 rounded-lg bg-zinc-100 dark:bg-white/4 border border-zinc-200 dark:border-white/6 text-xs font-medium text-zinc-600 dark:text-zinc-400 transition-colors hover:text-zinc-900 dark:hover:text-zinc-200 hover:border-zinc-300 dark:hover:border-white/12 cursor-default select-none"
-                    >
-                      {p.name}
-                    </span>
-                  ))}
-                </div>
-              </div>
+               </div>
             </div>
           </AnimatedSection>
+        </div>
 
+        {/* Feature 2 */}
+        <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-24">
+          <AnimatedSection direction="up" delay={0.1} className="lg:w-1/2 order-1 w-full">
+            <div className="aspect-[4/3] rounded-2xl bg-zinc-50 dark:bg-[#0a0a0a] border border-zinc-200 dark:border-white/10 flex items-center justify-center p-8 relative overflow-hidden shadow-sm">
+               <div className="absolute inset-0 bg-grid opacity-10 dark:opacity-20" />
+               <div className="w-full grid grid-cols-2 gap-3 relative z-10">
+                  <div className="aspect-square border border-zinc-200 dark:border-white/10 rounded-xl bg-white dark:bg-zinc-900/50 backdrop-blur-sm p-4 flex flex-col justify-between">
+                    <span className="text-[10px] font-mono text-zinc-400">CHUNK_A</span>
+                    <span className="text-xl font-semibold">98%</span>
+                  </div>
+                  <div className="aspect-square border border-zinc-200 dark:border-white/10 rounded-xl bg-white dark:bg-zinc-900/50 backdrop-blur-sm p-4 flex flex-col justify-between">
+                    <span className="text-[10px] font-mono text-zinc-400">CHUNK_B</span>
+                    <span className="text-xl font-semibold">92%</span>
+                  </div>
+                  <div className="col-span-2 p-3 border border-zinc-200 dark:border-white/10 rounded-xl bg-white dark:bg-zinc-900/50 backdrop-blur-sm flex items-center justify-between">
+                    <span className="text-xs font-medium">Context Window</span>
+                    <span className="text-xs text-zinc-500">4,096 / 4,096</span>
+                  </div>
+               </div>
+            </div>
+          </AnimatedSection>
+          <AnimatedSection direction="up" delay={0.2} className="lg:w-1/2 order-2">
+            <div className="w-12 h-12 rounded-xl bg-zinc-100 dark:bg-white/5 border border-zinc-200 dark:border-white/10 flex items-center justify-center mb-6">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-6 h-6 text-zinc-900 dark:text-zinc-100"><rect x="3" y="3" width="18" height="18" rx="2" ry="2" strokeLinecap="round" strokeLinejoin="round"/><line x1="3" y1="9" x2="21" y2="9" strokeLinecap="round" strokeLinejoin="round"/><line x1="9" y1="21" x2="9" y2="9" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            </div>
+            <h3 className="text-2xl md:text-3xl font-bold text-zinc-900 dark:text-white mb-4 tracking-tight">Context Tetris</h3>
+            <p className="text-base text-zinc-600 dark:text-zinc-400 leading-relaxed mb-6">
+              Language models have strict context window limits. Instead of blindly passing the top-K retrieved chunks, Quira employs a dynamic scoring algorithm to pack the most valuable chunks into your remaining token budget based on relevance, recency, diversity, and density.
+            </p>
+            <Link href="/docs#context-tetris" className="inline-flex items-center text-sm font-medium text-zinc-900 dark:text-white hover:opacity-70 transition-opacity">
+              Explore the algorithm <ChevronRight className="w-4 h-4 ml-1" />
+            </Link>
+          </AnimatedSection>
+        </div>
+
+        {/* Feature 3 */}
+        <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-24">
+          <AnimatedSection direction="up" delay={0.1} className="lg:w-1/2 order-2 lg:order-1">
+            <div className="w-12 h-12 rounded-xl bg-zinc-100 dark:bg-white/5 border border-zinc-200 dark:border-white/10 flex items-center justify-center mb-6">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-6 h-6 text-zinc-900 dark:text-zinc-100"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" strokeLinecap="round" strokeLinejoin="round"/><polyline points="7.5 4.21 12 6.81 16.5 4.21" strokeLinecap="round" strokeLinejoin="round"/><polyline points="7.5 19.79 7.5 14.6 3 12" strokeLinecap="round" strokeLinejoin="round"/><polyline points="21 12 16.5 14.6 16.5 19.79" strokeLinecap="round" strokeLinejoin="round"/><polyline points="3.27 6.96 12 12.01 20.73 6.96" strokeLinecap="round" strokeLinejoin="round"/><line x1="12" y1="22.08" x2="12" y2="12" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            </div>
+            <h3 className="text-2xl md:text-3xl font-bold text-zinc-900 dark:text-white mb-4 tracking-tight">Differential States</h3>
+            <p className="text-base text-zinc-600 dark:text-zinc-400 leading-relaxed mb-6">
+              In a multi-turn chat session, standard frameworks continuously append the entire conversation history. Quira maintains state on the server and only sends the delta to the LLM, slashing token costs.
+            </p>
+            <Link href="/docs#differential-context" className="inline-flex items-center text-sm font-medium text-zinc-900 dark:text-white hover:opacity-70 transition-opacity">
+              Learn about deltas <ChevronRight className="w-4 h-4 ml-1" />
+            </Link>
+          </AnimatedSection>
+          <AnimatedSection direction="up" delay={0.2} className="lg:w-1/2 order-1 lg:order-2 w-full">
+            <div className="aspect-[4/3] rounded-2xl bg-zinc-50 dark:bg-[#0a0a0a] border border-zinc-200 dark:border-white/10 flex items-center justify-center p-8 relative overflow-hidden shadow-sm">
+               <div className="absolute inset-0 bg-grid opacity-10 dark:opacity-20" />
+               <div className="w-full flex flex-col gap-4 relative z-10">
+                  <div className="p-4 border border-zinc-200 dark:border-white/10 rounded-xl bg-white dark:bg-zinc-900/50 backdrop-blur-sm opacity-50 flex justify-between items-center">
+                    <span className="text-xs line-through">Old State (2,400 tokens)</span>
+                  </div>
+                  <div className="p-4 border border-emerald-500/30 bg-emerald-500/5 rounded-xl flex justify-between items-center shadow-sm">
+                    <span className="text-sm font-medium text-emerald-700 dark:text-emerald-400">Delta Update (+120 tokens)</span>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4 text-emerald-500"><path d="M5 12l5 5L20 7" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                  </div>
+               </div>
+            </div>
+          </AnimatedSection>
         </div>
 
         {/* ── Architecture Flow ── */}

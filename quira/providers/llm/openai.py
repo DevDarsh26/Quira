@@ -104,3 +104,11 @@ class OpenAIProvider(LLMProvider):
             model=self.default_embed_model
         )
         return response.data[0].embedding
+
+    def count_tokens(self, text: str) -> int:
+        try:
+            import tiktoken
+            encoding = tiktoken.encoding_for_model(self.default_model)
+            return len(encoding.encode(text))
+        except Exception:
+            return int(len(text) / 4)

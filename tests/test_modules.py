@@ -22,6 +22,7 @@ def mock_vector_store():
 def mock_llm():
     llm = MagicMock()
     llm.complete = AsyncMock(return_value="Compressed chunk")
+    llm.count_tokens = MagicMock(return_value=10)
     return llm
 
 @pytest.mark.asyncio

@@ -128,18 +128,56 @@
     @apply bg-background text-foreground;
   }
   html {
-    @apply font-sans;
+    @apply font-sans antialiased selection:bg-emerald-500/30 selection:text-emerald-200;
     scroll-behavior: smooth;
   }
 }
 
-/* ── Dot Grid Background ── */
+@layer utilities {
+  .prose {
+    --tw-prose-body: var(--muted-foreground);
+    --tw-prose-headings: var(--foreground);
+    --tw-prose-links: var(--foreground);
+    --tw-prose-bold: var(--foreground);
+    --tw-prose-counters: var(--muted-foreground);
+    --tw-prose-bullets: var(--muted-foreground);
+    --tw-prose-hr: var(--border);
+    --tw-prose-quotes: var(--foreground);
+    --tw-prose-quote-borders: var(--border);
+    --tw-prose-captions: var(--muted-foreground);
+    --tw-prose-code: var(--foreground);
+    --tw-prose-pre-code: var(--muted-foreground);
+    --tw-prose-pre-bg: oklch(0.04 0 0);
+    --tw-prose-th-borders: var(--border);
+    --tw-prose-td-borders: var(--border);
+  }
+  .prose blockquote {
+    border-left-width: 2px;
+    border-color: var(--border);
+    background: transparent;
+    padding: 0.5rem 1rem;
+    color: var(--muted-foreground);
+    font-style: italic;
+  }
+}
+
+/* ── Professional Subtle Grid ── */
 .bg-grid {
-  background-size: 24px 24px;
+  position: absolute;
+  inset: 0;
+  background-size: 32px 32px;
   background-image:
-    radial-gradient(circle, var(--grid-dot) 1px, transparent 1px);
-  mask-image: radial-gradient(ellipse 80% 60% at 50% 40%, black 30%, transparent 100%);
-  -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 40%, black 30%, transparent 100%);
+    linear-gradient(to right, rgba(0, 0, 0, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(0, 0, 0, 0.04) 1px, transparent 1px);
+  mask-image: linear-gradient(to bottom, black 20%, transparent 80%);
+  -webkit-mask-image: linear-gradient(to bottom, black 20%, transparent 80%);
+  z-index: -1;
+}
+
+.dark .bg-grid {
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
 }
 
 /* ── Glow Animations ── */
@@ -173,8 +211,11 @@
   width: 2ch;
   margin-right: 1.5ch;
   text-align: right;
-  color: rgba(255, 255, 255, 0.15);
+  color: rgba(0, 0, 0, 0.3);
   user-select: none;
+}
+.dark .code-block .line::before {
+  color: rgba(255, 255, 255, 0.15);
 }
 
 /* ── Smooth Scrollbar ── */
@@ -186,13 +227,23 @@
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.1);
   border-radius: 999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(0, 0, 0, 0.2);
 }
 * {
   scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.1) transparent;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.08);
+}
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+.dark * {
   scrollbar-color: rgba(255, 255, 255, 0.08) transparent;
 }

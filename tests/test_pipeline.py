@@ -21,6 +21,7 @@ def mock_pipeline():
     class MockLLM(LLMProvider):
         async def complete(self, *args, **kwargs): return "Pipeline generated answer"
         def embed(self, *args, **kwargs): return [0.1, 0.2]
+        def count_tokens(self, *args, **kwargs): return 10
         async def stream(self, *args, **kwargs):
             yield "Pipeline "
             yield "generated "
@@ -58,3 +59,28 @@ def test_pipeline_initialization_strings():
     # Just testing instantiation with string providers doesn't crash 
     # (Requires no actual keys if we don't call them, but we mock API keys if needed)
     pass
+
+@pytest.mark.asyncio
+async def test_process_submission_graceful_degradation(mock_pipeline):
+    session = UserSession("test_user_fallbacks")
+    
+    # Force the LLM to raise an exception
+    mock_pipeline.llm.complete = AsyncMock(side_effect=Exception("API Down!"))
+    
+    # It should not raise an unhandled exception, but return the graceful UI string
+    answer = await mock_pipeline.process_submission(session, "test query")
+    assert "⚠️ The system is currently experiencing high load" in answer
+
+@pytest.mark.asyncio
+async def test_multi_user_isolation(mock_pipeline):
+    session_a = UserSession("user_A")
+    session_b = UserSession("user_B")
+    
+    # Simulate user A typing
+    await mock_pipeline.handle_typing_event(session_a, "hello")
+    # Simulate user B typing simultaneously
+    await mock_pipeline.handle_typing_event(session_b, "world")
+    
+    # Assert speculative retriever correctly partitioned users in the debouncer
+    assert "user_A" in mock_pipeline.speculative.debouncer._tasks
+    assert "user_B" in mock_pipeline.speculative.debouncer._tasks
