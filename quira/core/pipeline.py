@@ -263,8 +263,10 @@ class quiraPipeline:
         # === DRAFT HIT CHECK (speculative pre-generation) ===
         # If the speculative module already pre-generated a response while the user was typing,
         # serve it instantly without running any retrieval or LLM generation.
+        import asyncio
+        final_emb = None
         try:
-            final_emb = self.embed_func(final_query)
+            final_emb = await asyncio.to_thread(self.embed_func, final_query)
             draft = self.speculative.get_draft_response(final_query, final_emb)
             if draft is not None:
                 logger.info(f"DRAFT HIT: serving pre-generated response, skipping full pipeline")
@@ -285,12 +287,15 @@ class quiraPipeline:
             self.differential.force_reset()
         
         try:
+            if final_emb is None:
+                final_emb = await asyncio.to_thread(self.embed_func, final_query)
+                
             # Check speculative cache first via on_submit
-            speculative_results = await self.speculative.on_submit(final_query)
+            speculative_results = await self.speculative.on_submit(final_query, query_embedding=final_emb)
             
             # Module 3: Differential Retrieval - get new chunks
             preloaded = speculative_results if speculative_results else None
-            new_chunks = await self.differential.retrieve(final_query, preloaded_candidates=preloaded)
+            new_chunks = await self.differential.retrieve(final_query, preloaded_candidates=preloaded, query_embedding=final_emb)
         except Exception as e:
             logger.error(f"Retrieval failed: {e}. Falling back to empty reactive RAG pool.")
             speculative_results = []

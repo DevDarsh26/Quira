@@ -277,7 +277,7 @@ class SpeculativeRetriever:
             logger.info(f"User {self.user_id}: draft miss, similarity={similarity:.3f} < 0.85")
             return None
 
-    async def on_submit(self, full_query: str) -> List[Dict[str, Any]]:
+    async def on_submit(self, full_query: str, query_embedding: Optional[np.ndarray] = None) -> List[Dict[str, Any]]:
         """
         Called when the user hits enter.
         Uses 3-tier cache lookup: exact hash → semantic similarity → full search.
@@ -307,7 +307,10 @@ class SpeculativeRetriever:
         # === Strategy 2: Semantic cache hit — compare against last speculative search ===
         if self._last_searched_embedding is not None and self._last_searched_results:
             try:
-                current_emb = await asyncio.to_thread(self.embed_func, full_query)
+                if query_embedding is not None:
+                    current_emb = query_embedding
+                else:
+                    current_emb = await asyncio.to_thread(self.embed_func, full_query)
                 similarity = self._cosine_similarity(current_emb, self._last_searched_embedding)
                 
                 if similarity > 0.75:
@@ -325,7 +328,10 @@ class SpeculativeRetriever:
         logger.info(f"User {self.user_id}: cache miss for '{full_query}', searching now normally")
         
         try:
-            current_emb = await asyncio.to_thread(self.embed_func, full_query)
+            if query_embedding is not None:
+                current_emb = query_embedding
+            else:
+                current_emb = await asyncio.to_thread(self.embed_func, full_query)
         except Exception as e:
             logger.error(f"Embedding failed: {e}")
             return []

@@ -73,9 +73,13 @@ class DifferentialRetriever:
     def get_context_pool(self) -> List[Dict[str, Any]]:
         return self.context_pool
 
-    async def retrieve(self, query: str, preloaded_candidates: Optional[List[Dict[str, Any]]] = None) -> List[Dict[str, Any]]:
+    async def retrieve(self, query: str, preloaded_candidates: Optional[List[Dict[str, Any]]] = None, query_embedding: Optional[np.ndarray] = None) -> List[Dict[str, Any]]:
         self.turn_count += 1
-        current_emb = self.embed_func(query)
+        if query_embedding is not None:
+            current_emb = query_embedding
+        else:
+            import asyncio
+            current_emb = await asyncio.to_thread(self.embed_func, query)
         
         mode = "FRESH"
         if len(self.turns) > 0:
