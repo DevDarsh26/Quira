@@ -311,6 +311,8 @@ class quiraPipeline:
         # Dead Code Fix: merge speculative results into the differential pool
         diff_pool = [dict(c) for c in self.differential.get_context_pool()]
         existing_ids = {c.get("id") for c in diff_pool}
+        
+        # Merge results from on_submit (cache hits)
         for chunk in speculative_results:
             cid = chunk.get("id")
             if cid and cid not in existing_ids:
@@ -321,6 +323,21 @@ class quiraPipeline:
                     "hit_count": 1
                 })
                 existing_ids.add(cid)
+                
+        # SPECULATIVE MERGE: Also merge the last drafted chunks even if they missed the cache!
+        # This protects accuracy when a user changes their question mid-typing.
+        last_draft_chunks = getattr(self.speculative, "_last_searched_results", [])
+        if last_draft_chunks:
+            for chunk in last_draft_chunks:
+                cid = chunk.get("id")
+                if cid and cid not in existing_ids:
+                    diff_pool.append({
+                        "id": cid,
+                        "text": chunk.get("payload", {}).get("text", ""),
+                        "embedding": chunk.get("vector", chunk.get("payload", {}).get("embedding", [])),
+                        "hit_count": 1
+                    })
+                    existing_ids.add(cid)
         
         # === ADAPTIVE ROUTING (Context Relevance Guard) ===
         highest_sim = 0.0
