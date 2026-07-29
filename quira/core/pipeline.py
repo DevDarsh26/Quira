@@ -333,7 +333,9 @@ class quiraPipeline:
             return float(np.dot(e1, e2) / (n1 * n2))
 
         for c in diff_pool:
-            c_emb = c.get("embedding") or c.get("vector", c.get("payload", {}).get("embedding"))
+            c_emb = c.get("embedding")
+            if c_emb is None:
+                c_emb = c.get("vector", c.get("payload", {}).get("embedding"))
             if c_emb is not None and final_emb is not None:
                 sim = _cos_sim(final_emb, c_emb)
                 if sim > highest_sim:
