@@ -37,9 +37,9 @@ async def test_speculative_rapid_typing(mock_vector_store, mock_cache):
     await asyncio.sleep(0.05)
     await spec.on_keystroke("hello")
     
-    # The debouncer delays for ~0.4s for the first/slow keystrokes
+    # The debouncer delays for ~2.5s for the first/slow keystrokes
     # Let's wait long enough for the LAST keystroke's debounce to fire, plus search time
-    await asyncio.sleep(1.0)
+    await asyncio.sleep(3.0)
     
     # We should only have performed ONE search because the earlier ones were aborted/debounced
     assert mock_vector_store.search.call_count == 1
@@ -83,7 +83,7 @@ async def test_semantic_cache_hit(mock_vector_store, mock_cache):
     
     # Simulate typing "quantum comp" which triggers speculative search
     await spec.on_keystroke("quantum comp")
-    await asyncio.sleep(1.0)  # Wait for debounce + search to complete
+    await asyncio.sleep(2.5)  # Wait for debounce + search to complete
     
     # Now submit "quantum computing" — should get semantic cache hit
     results = await spec.on_submit("quantum computing")
