@@ -89,22 +89,22 @@ class SpeculativeRetriever:
 
     def _get_debounce_time(self, current_time: float, chars_typed: int) -> float:
         if self._last_keystroke_time == 0:
-            return 2.0
+            return 0.4
             
         time_diff = current_time - self._last_keystroke_time
         if time_diff == 0:
-            return 2.0
+            return 0.4
             
         chars_per_sec = chars_typed / time_diff
         
-        # INCREASED DEBOUNCE: Protects Free-Tier rate limits and reduces compute cost.
-        # It only triggers a speculative background fetch if the user *actually* pauses to think.
+        # AGGRESSIVE DEBOUNCE RESTORED:
+        # Now that we are using Groq (which has massive rate limits and is practically free),
         if chars_per_sec > 5:
-            return 2.500  # Fast typer, wait longer to see if they continue
+            return 0.600  # Fast typer, wait slightly longer
         elif chars_per_sec < 2:
-            return 1.250  # Slow typer, they might actually be pausing
+            return 0.400  # Slow typer, fire almost instantly
         else:
-            return 2.000  # Normal typer
+            return 0.500  # Normal typer, fire on spacebar pause
 
     def _hash_query(self, query: str) -> str:
         return hashlib.sha256(query.encode("utf-8")).hexdigest()
