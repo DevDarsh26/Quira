@@ -282,11 +282,14 @@ class ContextTetris:
     # ----------------------------------------------------------------
     def score_chunk(self, chunk: Dict[str, Any], query_embedding: np.ndarray, max_sim_cache: float) -> ChunkScore:
         # Relevance
-        chunk_emb = np.array(chunk.get("embedding", []))
-        if len(chunk_emb) == 0:
-            relevance = 0.0
+        if "score" in chunk:
+            relevance = float(chunk["score"])
         else:
-            relevance = self._cosine_similarity(query_embedding, chunk_emb)
+            chunk_emb = np.array(chunk.get("embedding", []))
+            if len(chunk_emb) == 0:
+                relevance = 0.0
+            else:
+                relevance = self._cosine_similarity(query_embedding, chunk_emb)
             
         # Recency (half life = 180 days)
         created_at = chunk.get("created_at", time.time())
