@@ -34,17 +34,17 @@ Traditional Retrieval-Augmented Generation (RAG) is **slow** and **expensive**:
 
 ---
 
-## ✨ The Quira Solution (v1.0 Enterprise)
+## ✨ The Quira Solution (v2.0 Enterprise)
 
 Quira solves this by **predicting** what users need *before* they finish typing, dynamically compressing context to maximize density, and statefully tracking the conversation.
 
-> **⏱️ 85% faster latency | 🧠 2.6× denser context | 💰 40% cheaper token costs**
+> **⏱️ Real Latency Reduction | 🧠 3-Tier Context Compression | 💰 Proven Token Savings**
 
 ### 🛡️ Enterprise-Ready Core
-- **Native Provenance:** Guaranteed, hallucination-free citations (`[Source: document.pdf | ID: c1]`).
-- **Zero-Config Observability:** Auto-detects and streams traces to **LangSmith** and **OpenTelemetry** with zero setup.
-- **Horizontal Scale:** Drop-in `RedisSessionStore` handles stateful conversations across 1,000+ load-balanced nodes.
-- **Injection Safety:** Streaming-optimized escaping neuters malicious prompt-injections instantly.
+- **Semantic Fuzzy Caching:** Matches predicted queries using Cosine Similarity, ensuring cache hits even with typos or phrasing differences.
+- **3-Tier Context Compression:** Extractive TextRank, Entity-anchored Extraction, and optional LLM Abstractive Summarization packed into the context window.
+- **Differential Retrieval State:** Tracks multi-turn conversations and reuses context securely, reducing token usage safely with proper Garbage Collection.
+- **Provider Abstraction Layer:** Run Quira with Groq, OpenAI, Gemini, Anthropic, or local Ollama instances transparently.
 
 ### 🏗️ Architecture
 

@@ -87,3 +87,11 @@ class GroqProvider(LLMProvider):
         if hasattr(emb, "tolist"):
             return emb.tolist()
         return list(emb)
+
+    def count_tokens(self, text: str) -> int:
+        try:
+            import tiktoken
+            encoding = tiktoken.get_encoding("cl100k_base")
+            return len(encoding.encode(text))
+        except Exception:
+            return max(1, len(text) // 4)

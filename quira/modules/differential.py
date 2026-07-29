@@ -26,9 +26,10 @@ class DifferentialRetriever:
     - Runs Delta Retrieval to fetch only genuinely new chunks
     - Garbage collects irrelevant chunks every 3 turns
     """
-    def __init__(self, user_id: str, vector_store: VectorStore, embed_func: Optional[Any] = None):
+    def __init__(self, user_id: str, vector_store: VectorStore, embed_func: Optional[Any] = None, top_k: int = 10):
         self.user_id = user_id
         self.vector_store = vector_store
+        self.top_k = top_k
         
         if embed_func:
             self.embed_func = embed_func
@@ -72,7 +73,7 @@ class DifferentialRetriever:
     def get_context_pool(self) -> List[Dict[str, Any]]:
         return self.context_pool
 
-    async def retrieve(self, query: str) -> List[Dict[str, Any]]:
+    async def retrieve(self, query: str, preloaded_candidates: Optional[List[Dict[str, Any]]] = None) -> List[Dict[str, Any]]:
         self.turn_count += 1
         current_emb = self.embed_func(query)
         
@@ -99,8 +100,8 @@ class DifferentialRetriever:
                     # The prompt says: "Keep top 5 most relevant existing chunks", we will stick to that.
             else:
                 mode = "FULL RESET"
-                logger.info(f"Turn {self.turn_count}: similarity={sim:.2f}, FULL RESET, pool cleared")
-                self.context_pool.clear()
+                logger.info(f"Turn {self.turn_count}: similarity={sim:.2f}, FULL RESET, pool cleared (except anchors)")
+                self.context_pool = [c for c in self.context_pool if c["id"] in self.anchor_chunks]
         else:
             logger.info(f"Turn {self.turn_count}: fresh retrieval, empty pool")
             
@@ -110,17 +111,21 @@ class DifferentialRetriever:
             "timestamp": time.time()
         })
         
-        # Search VectorStore for top 15 candidates
-        try:
-            hits = await self.vector_store.search(
-                collection_name=f"quira_{self.user_id}",
-                query_vector=current_emb.tolist() if hasattr(current_emb, "tolist") else list(current_emb),
-                limit=15
-            )
-            candidates = [{"id": hit["id"], "text": hit["payload"].get("text", ""), "embedding": np.array(hit.get("vector") or hit["payload"].get("embedding", current_emb)), "hit_count": 0} for hit in hits]
-        except Exception as e:
-            logger.warning(f"Search failed, returning empty context: {e}")
-            candidates = []
+        if preloaded_candidates is not None:
+            hits = preloaded_candidates
+            candidates = [{"id": hit["id"], "text": hit.get("payload", {}).get("text", ""), "embedding": np.array(hit.get("vector") or hit.get("payload", {}).get("embedding", current_emb)), "hit_count": 0} for hit in hits]
+        else:
+            # Search VectorStore for top_k candidates
+            try:
+                hits = await self.vector_store.search(
+                    collection_name=f"quira_{self.user_id}",
+                    query_vector=current_emb.tolist() if hasattr(current_emb, "tolist") else list(current_emb),
+                    limit=self.top_k
+                )
+                candidates = [{"id": hit["id"], "text": hit["payload"].get("text", ""), "embedding": np.array(hit.get("vector") or hit["payload"].get("embedding", current_emb)), "hit_count": 0} for hit in hits]
+            except Exception as e:
+                logger.warning(f"Search failed, returning empty context: {e}")
+                candidates = []
             
         # Differential Retrieval Logic
         new_chunks = []

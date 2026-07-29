@@ -62,8 +62,13 @@ class LLMProvider(ABC):
         
     def count_tokens(self, text: str) -> int:
         """
-        Estimate or exactly count tokens for a given string.
-        By default, uses a rough 4-chars-per-token heuristic.
-        Should be overridden by specific providers using their native tokenizer (e.g., tiktoken, transformers).
+        Count tokens for a given string using tiktoken (cl100k_base encoding).
+        Falls back to a rough heuristic if tiktoken fails.
+        Should be overridden by specific providers using their native tokenizer.
         """
-        return int(len(text) / 4)
+        try:
+            import tiktoken
+            encoding = tiktoken.get_encoding("cl100k_base")
+            return len(encoding.encode(text))
+        except Exception:
+            return max(1, len(text) // 4)

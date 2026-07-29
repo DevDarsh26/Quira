@@ -41,3 +41,16 @@ class GeminiProvider(LLMProvider):
             task_type="retrieval_query",
         )
         return result['embedding']
+
+    def count_tokens(self, text: str) -> int:
+        try:
+            model = genai.GenerativeModel(self.default_model)
+            result = model.count_tokens(text)
+            return result.total_tokens
+        except Exception:
+            try:
+                import tiktoken
+                encoding = tiktoken.get_encoding("cl100k_base")
+                return len(encoding.encode(text))
+            except Exception:
+                return max(1, len(text) // 4)
