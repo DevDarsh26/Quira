@@ -29,7 +29,13 @@ class AnthropicProvider(LLMProvider):
                 raise ImportError("FastEmbed is not installed. Run `pip install quira[local-embed]` or provide a custom embed_func.")
 
     async def complete(self, prompt: str, system_prompt: Optional[str] = None, model: Optional[str] = None) -> str:
-        messages = [{"role": "user", "content": prompt}]
+        messages = [{"role": "user", "content": [
+            {
+                "type": "text",
+                "text": prompt,
+                "cache_control": {"type": "ephemeral"}
+            }
+        ]}]
         kwargs = {
             "model": model or self.default_model,
             "max_tokens": 4096,
@@ -50,7 +56,13 @@ class AnthropicProvider(LLMProvider):
         return response.content[0].text
 
     async def stream(self, prompt: str, system_prompt: Optional[str] = None, model: Optional[str] = None):
-        messages = [{"role": "user", "content": prompt}]
+        messages = [{"role": "user", "content": [
+            {
+                "type": "text",
+                "text": prompt,
+                "cache_control": {"type": "ephemeral"}
+            }
+        ]}]
         kwargs = {
             "model": model or self.default_model,
             "max_tokens": 4096,

@@ -391,6 +391,16 @@ class quiraPipeline:
             packed_context_chunks = packed_context.chunks
             packed_stats = packed_context.stats
             
+            # Update diff_pool with compressed texts from Tetris
+            compressed_map = {c.get("id"): c.get("text") for c in packed_context_chunks}
+            for c in diff_pool:
+                cid = c.get("id")
+                if cid in compressed_map:
+                    c["text"] = compressed_map[cid]
+                    
+            # Also update the differential retriever's in-memory pool so it doesn't serve uncompressed chunks next turn
+            self.differential.context_pool = diff_pool
+            
             # Update session pool
             user_session.context_pool = diff_pool
             await self.session_store.save_session(user_session)

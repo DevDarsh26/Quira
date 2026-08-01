@@ -16,6 +16,10 @@ import statistics
 import os
 import sys
 import json
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Ensure quira is in path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -95,15 +99,17 @@ async def run_quira_single(pipeline, queries):
     for q in queries:
         session = UserSession("benchmark_quira")
         
+        start = time.perf_counter()
         # Simulate typing event with partial query (first 60% of chars)
         partial = q[:int(len(q) * 0.6)]
+        sleep_time = 0
         if len(partial) > 3:
             await pipeline.handle_typing_event(session, partial)
-            await asyncio.sleep(0.3)  # Simulate typing pause
+            sleep_time = 0.3
+            await asyncio.sleep(sleep_time)  # Simulate typing pause
         
-        start = time.perf_counter()
         await pipeline.process_submission(session, q, use_tetris=True)
-        latencies.append(time.perf_counter() - start)
+        latencies.append((time.perf_counter() - start) - sleep_time)
     
     return latencies
 
@@ -121,15 +127,17 @@ async def run_quira_multiturn(pipeline, query_groups):
         pipeline.differential.force_reset()
         
         for q in group:
+            start = time.perf_counter()
             # Simulate typing
             partial = q[:int(len(q) * 0.6)]
+            sleep_time = 0
             if len(partial) > 3:
                 await pipeline.handle_typing_event(session, partial)
-                await asyncio.sleep(0.3)
+                sleep_time = 0.3
+                await asyncio.sleep(sleep_time)
             
-            start = time.perf_counter()
             await pipeline.process_submission(session, q, use_tetris=True)
-            all_latencies.append(time.perf_counter() - start)
+            all_latencies.append((time.perf_counter() - start) - sleep_time)
         
         # Record reuse rate after the group
         diff_stats = pipeline.differential.get_stats()
@@ -157,7 +165,7 @@ def main():
     # Initialize pipeline
     print("\nInitializing pipeline...")
     pipeline = quiraPipeline(
-        vector_store="qdrant",
+        vector_store="memory",
         cache="memory",
         llm="groq/llama-3.1-8b-instant"
     )

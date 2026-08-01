@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { ArrowRight, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import pkg from "../../package.json";
+import fs from "fs";
+import path from "path";
 import { AnimatedSection } from "@/components/AnimatedSection";
 import { CopyButton } from "@/components/CopyButton";
 import { TerminalTypewriter } from "@/components/TerminalTypewriter";
@@ -55,7 +56,16 @@ async for chunk in pipeline.process_submission_stream(
 const installCmd = `pip install quira`;
 
 export default async function Home() {
-  const version = pkg.version || "0.x.x";
+  let version = "0.x.x";
+  try {
+    const pyprojectStr = fs.readFileSync(path.join(process.cwd(), "../pyproject.toml"), "utf-8");
+    const versionMatch = pyprojectStr.match(/version\s*=\s*"([^"]+)"/);
+    if (versionMatch) {
+      version = versionMatch[1];
+    }
+  } catch (e) {
+    console.error("Could not read pyproject.toml", e);
+  }
 
   return (
     <div className="flex flex-col items-center w-full relative overflow-hidden">

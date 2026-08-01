@@ -346,12 +346,17 @@ class ContextTetris:
             # Tier 2: Heavy — entity-anchored sentences only
             compressed_text = self._entity_anchored_extract(text, preserved, target_ratio=0.35)
         
+        llm_cost_tokens = 0
         # Tier 3: Optional LLM abstractive (only if enabled and chunk is low-scoring)
         if self.compression_llm and score < 0.5 and orig_tokens >= 100:
             try:
                 llm_result = await self._llm_compress(text, preserved)
                 llm_tokens = self._count_tokens(llm_result)
                 ext_tokens = self._count_tokens(compressed_text)
+                
+                # Approximate the cost of the LLM call: input tokens (prompt + text) + output tokens
+                llm_cost_tokens = orig_tokens + 50 + llm_tokens
+                
                 # Only use LLM result if it's actually shorter
                 if llm_tokens < ext_tokens:
                     compressed_text = llm_result
@@ -360,7 +365,8 @@ class ContextTetris:
         
         new_tokens = self._count_tokens(compressed_text)
         if new_tokens < orig_tokens:
-            self._stats["tokens_saved"] += (orig_tokens - new_tokens)
+            net_savings = (orig_tokens - new_tokens) - llm_cost_tokens
+            self._stats["tokens_saved"] += net_savings
             self._stats["compressed_chunks"] += 1
             
         new_chunk = chunk.copy()
