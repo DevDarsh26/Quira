@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.0] - 2026-08-03 (Performance & Academic Validation)
+
+### Added
+- **Academic Benchmarking Suite**: Added comprehensive RAG benchmarking scripts (`run_triviaqa.py`, `run_popqa.py`, `run_hotpotqa.py`, `run_coqa.py`) to validate Quira against General QA, Hallucination, Multi-hop Logic, and Conversational RAG datasets.
+- **Zero-Cost Lexical Intent Debouncing**: Integrated `difflib.SequenceMatcher` to mathematically calculate structural intent changes during streaming input, skipping vector database queries if intent remains above 90% similarity.
+- **Speculative Retrieval Toggle**: Added `enable_speculative_retrieval` as an explicit configuration parameter to the `quiraPipeline` constructor, allowing enterprises to hard-disable predictive fetching.
+
+
 ## [1.0.0] - 2026-07-25 (Enterprise Edition)
 
 ### Added
