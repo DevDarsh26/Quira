@@ -41,9 +41,10 @@ Quira solves this by **predicting** what users need *before* they finish typing,
 > **⏱️ Real Latency Reduction | 🧠 3-Tier Context Compression | 💰 Proven Token Savings**
 
 ### 🛡️ Enterprise-Ready Core
+- **Lexical Intent Debouncing:** Saves up to 80% on vector database costs by only firing speculative fetches when human intent changes, not on every keystroke.
 - **Semantic Fuzzy Caching:** Matches predicted queries using Cosine Similarity, ensuring cache hits even with typos or phrasing differences.
 - **3-Tier Context Compression:** Extractive TextRank, Entity-anchored Extraction, and optional LLM Abstractive Summarization packed into the context window.
-- **Differential Retrieval State:** Tracks multi-turn conversations and reuses context securely, reducing token usage safely with proper Garbage Collection.
+- **Differential Retrieval State:** Tracks multi-turn conversations and reuses context securely, reducing database reads and latency safely with proper Garbage Collection.
 - **Provider Abstraction Layer:** Run Quira with Groq, OpenAI, Gemini, Anthropic, or local Ollama instances transparently.
 
 ### 🏗️ Architecture

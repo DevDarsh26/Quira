@@ -69,6 +69,7 @@ class SpeculativeRetriever:
             "cache_misses": 0,
             "semantic_cache_hits": 0,
             "searches_aborted": 0,
+            "lexical_aborts": 0,
             "searches_completed": 0,
             "time_saved_ms": 0.0,
             "reused_partial": 0,
@@ -138,6 +139,16 @@ class SpeculativeRetriever:
             return
             
         async with self._search_lock:
+            # === Lexical Intent Debouncing ===
+            if self._last_searched_query:
+                import difflib
+                ratio = difflib.SequenceMatcher(None, self._last_searched_query, partial_query).ratio()
+                # If they just finished a word or fixed a typo, abort the expensive embedding/DB fetch
+                if ratio > 0.90:
+                    logger.info(f"User {self.user_id}: Lexical intent unchanged (sim={ratio:.2f}), aborting DB fetch to save costs.")
+                    self._stats["lexical_aborts"] += 1
+                    return
+                    
             try:
                 # Offload synchronous embedding to a thread to avoid blocking the event loop
                 current_emb = await asyncio.to_thread(self.embed_func, partial_query)

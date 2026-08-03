@@ -42,6 +42,8 @@ class quiraPipeline:
         session_store: Union[str, SessionStore, Any] = "memory",
         # Compression
         compression_llm: Union[str, LLMProvider, Any, None] = None,
+        # Speculative retrieval toggle
+        enable_speculative_retrieval: bool = True,
         # Speculative draft pre-generation (opt-in, requires long typing pauses)
         enable_draft_pregeneration: bool = False,
         # Adaptive Routing Config
@@ -58,6 +60,9 @@ class quiraPipeline:
             self.session_store = RedisSessionStore()
         else:
             self.session_store = MemorySessionStore()
+
+        # Speculative Config
+        self.enable_speculative_retrieval = enable_speculative_retrieval
 
         # Adaptive Routing Config
         self.adaptive_threshold = adaptive_threshold
@@ -236,6 +241,9 @@ class quiraPipeline:
     @trace_event(name="quira.pipeline.handle_typing_event")
     async def handle_typing_event(self, session: Union[str, UserSession], keystroke_stream: str) -> None:
         """Module 1: Detects typing via WebSocket and speculatively searches after debounce."""
+        if not self.enable_speculative_retrieval:
+            return
+
         if isinstance(session, str):
             user_session = await self.session_store.get_session(session)
         else:

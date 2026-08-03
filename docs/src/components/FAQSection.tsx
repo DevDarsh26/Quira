@@ -21,6 +21,10 @@ const faqs = [
   {
     question: "Is Quira open-source?",
     answer: "Yes, Quira is 100% open-source and MIT-licensed. We believe the future of RAG infrastructure should be transparent and accessible to all developers."
+  },
+  {
+    question: "Does Speculative Retrieval increase my vector database costs?",
+    answer: "No. Quira uses Lexical Intent Debouncing to only trigger database fetches when human intent changes (not on every single keystroke). This preserves the zero-latency experience while saving up to 80% on vector database API costs."
   }
 ];
 

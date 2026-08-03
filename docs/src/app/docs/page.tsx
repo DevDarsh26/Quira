@@ -64,7 +64,7 @@ export default function DocsPage() {
               How it works
             </h4>
             <div className="text-[14px] text-zinc-600 dark:text-zinc-400 m-0 leading-relaxed">
-              Quira tracks keyboard typing speeds in your UI. It implements advanced debounce logic and <strong className="text-zinc-900 dark:text-white font-medium">speculatively searches the database while the user is still typing</strong>. By the time the user presses &quot;Enter&quot;, the relevant chunks are already loaded in local memory, reducing perceived latency to absolutely zero.
+              Quira tracks keyboard typing speeds in your UI. It implements advanced debounce logic—specifically <strong>Lexical Intent Debouncing</strong>—which checks if the user&apos;s intent has actually changed before speculatively searching the database. By the time the user presses &quot;Enter&quot;, the relevant chunks are already loaded in local memory, reducing perceived latency to absolutely zero without spamming your database.
             </div>
           </div>
         </div>
@@ -99,17 +99,17 @@ export default function DocsPage() {
         </div>
       </AnimatedSection>
 
-      {/* --- DIFFERENTIAL CONTEXT --- */}
-      <AnimatedSection direction="none" id="differential-context" className="scroll-mt-32 mb-20">
+      {/* --- DIFFERENTIAL RETRIEVAL --- */}
+      <AnimatedSection direction="none" id="differential-retrieval" className="scroll-mt-32 mb-20">
         <h2 className="text-2xl font-semibold tracking-tight mb-4 text-zinc-900 dark:text-white">
-          Differential Context
+          Differential Retrieval
         </h2>
         <div className="prose prose-zinc dark:prose-invert max-w-none">
           <p className="text-zinc-600 dark:text-zinc-400 leading-relaxed">
-            In a multi-turn chat session, standard frameworks continuously append the entire conversation history along with newly retrieved chunks to the prompt. This causes the token count to explode exponentially.
+            In a multi-turn chat session, standard frameworks continuously re-query the vector database for identical context, adding hundreds of milliseconds of redundant latency to every turn.
           </p>
           <p className="text-zinc-600 dark:text-zinc-400 leading-relaxed mt-4">
-            Quira uses <strong>Differential Context</strong>. We maintain the state of the conversation on the server and only send the <em>delta</em> — the exact difference between the last state and the new state — to the LLM. 
+            Quira uses <strong>Differential Retrieval</strong>. We maintain the state of the conversation on the server and only fetch the <em>delta</em> — new information relevant to the current turn — from the vector database. This densely packed context pool is then compressed by Context Tetris before being sent to the LLM, saving both database reads and LLM tokens.
           </p>
         </div>
       </AnimatedSection>

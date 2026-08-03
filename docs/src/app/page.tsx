@@ -160,7 +160,7 @@ export default async function Home() {
             <h3 className="text-2xl md:text-3xl font-bold text-zinc-900 dark:text-white mb-4 tracking-tight">Speculative Retrieval</h3>
             <p className="text-base text-zinc-600 dark:text-zinc-400 leading-relaxed mb-6">
               Why wait for the LLM to finish thinking? Quira predicts the required context
-              and pre-fetches it asynchronously. By the time the LLM needs it, the data is already there, eliminating database round-trip latency.
+              and pre-fetches it asynchronously. Built-in Lexical Intent Debouncing ensures we only query your database when intent changes, eliminating latency without exploding API costs.
             </p>
             <Link href="/docs#speculative-retrieval" className="inline-flex items-center text-sm font-medium text-zinc-900 dark:text-white hover:opacity-70 transition-opacity">
               Read how it works <ChevronRight className="w-4 h-4 ml-1" />
@@ -224,11 +224,11 @@ export default async function Home() {
             <div className="w-12 h-12 rounded-xl bg-zinc-100 dark:bg-white/5 border border-zinc-200 dark:border-white/10 flex items-center justify-center mb-6">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-6 h-6 text-zinc-900 dark:text-zinc-100"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" strokeLinecap="round" strokeLinejoin="round"/><polyline points="7.5 4.21 12 6.81 16.5 4.21" strokeLinecap="round" strokeLinejoin="round"/><polyline points="7.5 19.79 7.5 14.6 3 12" strokeLinecap="round" strokeLinejoin="round"/><polyline points="21 12 16.5 14.6 16.5 19.79" strokeLinecap="round" strokeLinejoin="round"/><polyline points="3.27 6.96 12 12.01 20.73 6.96" strokeLinecap="round" strokeLinejoin="round"/><line x1="12" y1="22.08" x2="12" y2="12" strokeLinecap="round" strokeLinejoin="round"/></svg>
             </div>
-            <h3 className="text-2xl md:text-3xl font-bold text-zinc-900 dark:text-white mb-4 tracking-tight">Differential States</h3>
+            <h3 className="text-2xl md:text-3xl font-bold text-zinc-900 dark:text-white mb-4 tracking-tight">Differential Retrieval</h3>
             <p className="text-base text-zinc-600 dark:text-zinc-400 leading-relaxed mb-6">
-              In a multi-turn chat session, standard frameworks continuously append the entire conversation history. Quira maintains state on the server and only sends the delta to the LLM, slashing token costs.
+              In a multi-turn chat session, standard frameworks continuously re-fetch the same documents from the database. Quira maintains state on the server and only fetches the delta from the vector database, slashing redundant retrieval latency and API costs.
             </p>
-            <Link href="/docs#differential-context" className="inline-flex items-center text-sm font-medium text-zinc-900 dark:text-white hover:opacity-70 transition-opacity">
+            <Link href="/docs#differential-retrieval" className="inline-flex items-center text-sm font-medium text-zinc-900 dark:text-white hover:opacity-70 transition-opacity">
               Learn about deltas <ChevronRight className="w-4 h-4 ml-1" />
             </Link>
           </AnimatedSection>
