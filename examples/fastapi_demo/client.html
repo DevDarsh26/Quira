@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Quira Fast RAG Demo</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; max-width: 800px; margin: 40px auto; padding: 20px; background: #f9f9f9; }
+        .container { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        h1 { margin-top: 0; color: #333; }
+        input[type="text"] { width: 100%; padding: 15px; font-size: 18px; border: 2px solid #ddd; border-radius: 8px; margin-bottom: 20px; box-sizing: border-box; }
+        input[type="text"]:focus { outline: none; border-color: #0969da; }
+        .log { background: #1e1e1e; color: #00ff00; padding: 15px; border-radius: 8px; font-family: monospace; height: 150px; overflow-y: auto; margin-bottom: 20px; font-size: 12px; }
+        .answer { padding: 20px; background: #f0f7ff; border-left: 4px solid #0969da; border-radius: 0 8px 8px 0; min-height: 100px; }
+        .upload-section { margin-bottom: 30px; padding: 20px; border: 2px dashed #ddd; border-radius: 8px; text-align: center; }
+        button { background: #0969da; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-size: 16px; }
+        button:hover { background: #0752ab; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>⚡ Quira Speculative RAG</h1>
+        
+        <div class="upload-section">
+            <h3>1. Ingest Data</h3>
+            <input type="file" id="fileInput" accept=".txt,.pdf">
+            <button onclick="uploadFile()">Upload & Embed</button>
+            <p id="uploadStatus" style="color: #666; font-size: 14px;"></p>
+        </div>
+
+        <h3>2. Ask a Question</h3>
+        <p style="color: #666; font-size: 14px;">As you type, Quira speculatively searches the vector database in the background.</p>
+        <input type="text" id="queryInput" placeholder="Start typing... Press Enter to submit" onkeyup="handleTyping(event)">
+        
+        <div class="log" id="wsLog">Waiting for connection...</div>
+        
+        <div class="answer" id="answerBox">
+            <em>Answer will appear here...</em>
+        </div>
+    </div>
+
+    <script>
+        const clientId = "client_" + Math.random().toString(36).substring(7);
+        const ws = new WebSocket(`ws://${window.location.host}/ws/${clientId}`);
+        const logBox = document.getElementById("wsLog");
+        const answerBox = document.getElementById("answerBox");
+        const queryInput = document.getElementById("queryInput");
+
+        function log(msg) {
+            logBox.innerHTML += `<div>> ${msg}</div>`;
+            logBox.scrollTop = logBox.scrollHeight;
+        }
+
+        ws.onopen = () => log(`Connected! Client ID: ${clientId}`);
+        ws.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            log(`[Background Task] Speculative search fired for: "${data.query}"`);
+        };
+
+        let typingTimer;
+        function handleTyping(event) {
+            // If Enter key is pressed, submit final query
+            if (event.key === 'Enter') {
+                submitQuery();
+                return;
+            }
+            
+            // Send keystrokes over WebSocket for Speculative Retrieval
+            if (ws.readyState === WebSocket.OPEN) {
+                ws.send(queryInput.value);
+            }
+        }
+
+        async function submitQuery() {
+            const query = queryInput.value;
+            if (!query) return;
+            
+            answerBox.innerHTML = `<em>Generating answer (Context Tetris in progress)...</em>`;
+            log(`[Submit] Final query sent: "${query}"`);
+            
+            const start = performance.now();
+            const res = await fetch("/query", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ client_id: clientId, query: query })
+            });
+            const end = performance.now();
+            
+            const data = await res.json();
+            answerBox.innerHTML = `<strong>Answer (${Math.round(end - start)}ms):</strong><br/><br/>${data.answer.replace(/\\n/g, '<br/>')}`;
+        }
+
+        async function uploadFile() {
+            const fileInput = document.getElementById('fileInput');
+            const status = document.getElementById('uploadStatus');
+            
+            if (!fileInput.files[0]) {
+                status.innerText = "Please select a file first.";
+                return;
+            }
+            
+            status.innerText = "Uploading and embedding... (this might take a few seconds)";
+            
+            const formData = new FormData();
+            formData.append("file", fileInput.files[0]);
+            
+            const res = await fetch("/ingest", {
+                method: "POST",
+                body: formData
+            });
+            
+            const data = await res.json();
+            if (data.status === "success") {
+                status.innerText = `Success! Ingested ${data.chunks_ingested} chunks.`;
+            } else {
+                status.innerText = "Upload failed.";
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,30 @@
+{
+  "timestamp": "2026-08-01T17:16:49",
+  "single_turn": {
+    "naive_avg_s": 0.6158,
+    "naive_p95_s": 1.3669,
+    "quira_avg_s": 0.9803,
+    "quira_p95_s": 3.576,
+    "improvement_pct": -59.2
+  },
+  "multi_turn": {
+    "avg_latency_s": 3.3759,
+    "avg_reuse_rate": 0.3221
+  },
+  "token_savings": {
+    "tokens_saved": 97,
+    "compression_pct": 45.33
+  },
+  "speculative": {
+    "cache_hits": 0,
+    "cache_misses": 20,
+    "semantic_cache_hits": 0,
+    "searches_aborted": 0,
+    "searches_completed": 7,
+    "time_saved_ms": 0.0,
+    "reused_partial": 0,
+    "draft_hits": 0,
+    "draft_misses": 40,
+    "hit_rate": 0.0
+  }
+}
