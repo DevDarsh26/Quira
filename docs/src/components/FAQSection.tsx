@@ -25,6 +25,14 @@ const faqs = [
   {
     question: "Does Speculative Retrieval increase my vector database costs?",
     answer: "No. Quira uses Lexical Intent Debouncing to only trigger database fetches when human intent changes (not on every single keystroke). This preserves the zero-latency experience while saving up to 80% on vector database API costs."
+  },
+   {
+    question: "Can I run Quira locally without a dedicated vector database server?",
+    answer: "Yes, with Quira Edge (Zero-Server Mode), you can run Quira entirely locally using embedded vector databases like DuckDB or SQLite (sqlite-vec). This requires no Redis or Qdrant servers, making it perfect for client-side apps, edge devices, and testing."
+  },
+  {
+    question: "Does Quira support GraphRAG or multi-hop reasoning?",
+    answer: "Yes! Quira automatically extracts Entity-Relationship Triplets during ingestion and traverses this Knowledge Graph in parallel with semantic search to provide hyper-accurate context, effectively solving the multi-hop reasoning problem."
   }
 ];
 
